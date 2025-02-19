@@ -1,4 +1,4 @@
-package music.service;
+package music.service.controller;
 
 import java.util.ArrayList;
 import java.util.List;
