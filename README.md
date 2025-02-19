@@ -28,4 +28,16 @@
 1. Клонируйте репозиторий:
    ```sh
    git clone https://github.com/ksenydmitri/MusicServise.git
-
+```
+2. Перейдите в директорию проекта:
+  ``` sh
+  cd MusicServise
+```
+3. Соберите проект с помощью Maven:
+  ``` sh
+  mvn clean install
+```
+4. Запустите приложение:
+  ``` sh 
+mvn spring-boot:run
+```
