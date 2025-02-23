@@ -17,11 +17,6 @@ public class MusicService {
         tracks.add(new Track("3", "Sample Title 3", "Sample Artist 3"));
     }
 
-    public List<Track> getTracksByGenre(String genre) {
-        // Здесь можно добавить фильтрацию треков по жанру
-        return tracks;
-    }
-
     public Track getTrackById(String id) {
         for (Track track : tracks) {
             if (track.getId().equals(id)) {
