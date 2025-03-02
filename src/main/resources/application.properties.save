@@ -1,0 +1,13 @@
+# Настройки базы данных MySQL
+spring.datasource.url=jdbc:mysql://localhost:3306/musicapp
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# Настройки JPA (опционально)
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
+
+# Настройки сервера (опционально)
+server.port=8080

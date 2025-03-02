@@ -1,32 +1,36 @@
 package music.service.service;
 
-import java.util.ArrayList;
-import java.util.List;
 import music.service.model.Track;
+import music.service.repositories.TrackRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
 
 @Service
-public class MusicService {
+public class TrackService {
 
-    private final List<Track> tracks = new ArrayList<>();
+    private final TrackRepository trackRepository;
 
-    public MusicService() {
-        tracks.add(new Track("1", "Sample Title 1", "Sample Artist 1"));
-        tracks.add(new Track("2", "Sample Title 2", "Sample Artist 2"));
-        tracks.add(new Track("3", "Sample Title 3", "Sample Artist 3"));
+    @Autowired
+    public TrackService(TrackRepository trackRepository) {
+        this.trackRepository = trackRepository;
     }
 
-    public Track getTrackById(String id) {
-        for (Track track : tracks) {
-            if (track.getId().equals(id)) {
-                return track;
-            }
-        }
-        return null;
+    public List<Track> getAllTracks() {
+        return trackRepository.findAll();
     }
 
-    public String sanitizeInput(final String input) {
-        return input.replaceAll("[^a-zA-Z0-9 ]", "");
+    public Optional<Track> getTrackById(Long id) {
+        return trackRepository.findById(id);
+    }
+
+    public Track saveTrack(Track track) {
+        return trackRepository.save(track);
+    }
+
+    public void deleteTrack(Long id) {
+        trackRepository.deleteById(id);
     }
 }
