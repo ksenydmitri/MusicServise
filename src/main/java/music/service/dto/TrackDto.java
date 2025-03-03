@@ -2,7 +2,7 @@ package music.service.dto;
 
 import java.time.LocalDate;
 
-public class TrackDTO {
+public class TrackDto {
 
     private Long id;
     private String title;
@@ -12,9 +12,10 @@ public class TrackDTO {
     private LocalDate releaseDate;
 
     // Конструкторы
-    public TrackDTO() {}
+    public TrackDto() {}
 
-    public TrackDTO(Long id, String title, String artist, String genre, Integer duration, LocalDate releaseDate) {
+    public TrackDto(Long id, String title, String artist, String genre,
+                    Integer duration, LocalDate releaseDate) {
         this.id = id;
         this.title = title;
         this.artist = artist;

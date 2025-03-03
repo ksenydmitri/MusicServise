@@ -1,12 +1,12 @@
 package music.service.service;
 
+
+import java.util.List;
+import java.util.Optional;
 import music.service.model.Track;
 import music.service.repositories.TrackRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class TrackService {
@@ -32,5 +32,9 @@ public class TrackService {
 
     public void deleteTrack(Long id) {
         trackRepository.deleteById(id);
+    }
+
+    public List<Track> getTracksByGenre(String genre) {
+        return trackRepository.findByGenre(genre);
     }
 }

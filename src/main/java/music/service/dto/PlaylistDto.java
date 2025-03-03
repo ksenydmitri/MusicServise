@@ -2,16 +2,16 @@ package music.service.dto;
 
 import java.util.Set;
 
-public class PlaylistDTO {
+public class PlaylistDto {
 
     private Long id;
     private String name;
     private Set<Long> trackIds;
 
     // Конструкторы
-    public PlaylistDTO() {}
+    public PlaylistDto() {}
 
-    public PlaylistDTO(Long id, String name, Set<Long> trackIds) {
+    public PlaylistDto(Long id, String name, Set<Long> trackIds) {
         this.id = id;
         this.name = name;
         this.trackIds = trackIds;

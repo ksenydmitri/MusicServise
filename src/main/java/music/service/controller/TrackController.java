@@ -1,14 +1,13 @@
 package music.service.controller;
 
-import music.service.dto.TrackDTO;
+import java.util.List;
+import java.util.Optional;
+import music.service.dto.TrackDto;
 import music.service.model.Track;
 import music.service.service.TrackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/tracks")
@@ -35,16 +34,22 @@ public class TrackController {
         return track.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/genre")
+    public ResponseEntity<List<Track>> getTracksByGenre(@RequestParam String genre) {
+        List<Track> tracks = trackService.getTracksByGenre(genre);
+        return ResponseEntity.ok(tracks);
+    }
+
     // Create new track
     @PostMapping
-    public ResponseEntity<Track> createTrack(@RequestBody TrackDTO trackDTO) {
+    public ResponseEntity<Track> createTrack(@RequestBody TrackDto trackDto) {
         // Преобразование TrackDTO в Track
         Track track = new Track(
-                trackDTO.getTitle(),
-                trackDTO.getArtist(),
-                trackDTO.getGenre(),
-                trackDTO.getDuration(),
-                trackDTO.getReleaseDate()
+                trackDto.getTitle(),
+                trackDto.getArtist(),
+                trackDto.getGenre(),
+                trackDto.getDuration(),
+                trackDto.getReleaseDate()
         );
 
         Track savedTrack = trackService.saveTrack(track);
@@ -53,7 +58,8 @@ public class TrackController {
 
     // Update track
     @PutMapping("/{id}")
-    public ResponseEntity<Track> updateTrack(@PathVariable Long id, @RequestBody TrackDTO trackDetails) {
+    public ResponseEntity<Track> updateTrack(@PathVariable Long id,
+                                             @RequestBody TrackDto trackDetails) {
         Optional<Track> optionalTrack = trackService.getTrackById(id);
         if (!optionalTrack.isPresent()) {
             return ResponseEntity.notFound().build();

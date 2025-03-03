@@ -1,12 +1,11 @@
 package music.service.service;
 
+import java.util.List;
+import java.util.Optional;
 import music.service.model.Playlist;
 import music.service.repositories.PlaylistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PlaylistService {

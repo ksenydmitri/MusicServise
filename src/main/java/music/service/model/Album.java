@@ -1,21 +1,38 @@
 package music.service.model;
 
-import javax.persistence.*;
+import java.util.LinkedHashSet;
 import java.util.Set;
+import javax.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
-@Table(name = "albums")
+@Table
 public class Album {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name="title", nullable=false)
+    @Column
     private String title;
 
-    @OneToMany(mappedBy = "album", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Track> tracks;
+    @ManyToMany
+    @JoinTable(name = "album_genre",
+            joinColumns = @JoinColumn(name = "album_id"),
+            inverseJoinColumns = @JoinColumn(name = "genre_id"))
+    private Set<Genre> genres = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "album")
+    private Set<Track> tracks = new LinkedHashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "user_album",
+            joinColumns = @JoinColumn(name = "album_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private Set<User> users = new LinkedHashSet<>();
 
     public Album() {}
 
@@ -23,27 +40,4 @@ public class Album {
         this.title = title;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public Set<Track> getTracks() {
-        return tracks;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setTracks(Set<Track> tracks) {
-        this.tracks = tracks;
-    }
 }

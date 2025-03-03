@@ -1,111 +1,63 @@
 package music.service.model;
 
-import javax.persistence.*;
-import java.time.LocalDate;
-import java.util.Set;
 
+import java.time.LocalDate;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import javax.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity
-@Table(name = "tracks")
+@Table
 public class Track {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name="title", nullable=false)
+    @ManyToMany
+    private Set<User> user;
+
+    @Column
     private String title;
 
-    @Column(name="artist", nullable=false)
-    private String artist;
+    @Column
+    private Integer duration;
 
-    @Column(name="genre")
-    private String genre;
-
-    @Column(name="duration")
-    private Integer duration; // Duration in seconds
-
-    @Column(name="release_date")
+    @Column
     private LocalDate releaseDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "album_id")
     private Album album;
 
-    @ManyToMany(mappedBy = "tracks", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "tracks", cascade = {CascadeType.DETACH,
+        CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     private Set<Playlist> playlists;
 
-    // Конструкторы, геттеры и сеттеры
+    @ManyToMany
+    @JoinTable(name = "track_genre",
+            joinColumns = @JoinColumn(name = "track_id"),
+            inverseJoinColumns = @JoinColumn(name = "genre_id"))
+    private Set<Genre> genres = new LinkedHashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "user_track",
+            joinColumns = @JoinColumn(name = "track_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private Set<User> users = new LinkedHashSet<>();
+
     public Track() {}
 
-    public Track(String title, String artist, String genre, Integer duration, LocalDate releaseDate) {
+    public Track(String title, Set<User> artists, Set<Genre> genres,
+                 Integer duration, LocalDate releaseDate) {
         this.title = title;
-        this.artist = artist;
-        this.genre = genre;
+        this.user = artists;
+        this.genres = genres;
         this.duration = duration;
         this.releaseDate = releaseDate;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getArtist() {
-        return artist;
-    }
-
-    public String getGenre() {
-        return genre;
-    }
-
-    public Integer getDuration() {
-        return duration;
-    }
-
-    public LocalDate getReleaseDate() {
-        return releaseDate;
-    }
-
-    public Album getAlbum() {
-        return album;
-    }
-
-    public Set<Playlist> getPlaylists() {
-        return playlists;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setArtist(String artist) {
-        this.artist = artist;
-    }
-
-    public void setGenre(String genre) {
-        this.genre = genre;
-    }
-
-    public void setDuration(Integer duration) {
-        this.duration = duration;
-    }
-
-    public void setReleaseDate(LocalDate releaseDate) {
-        this.releaseDate = releaseDate;
-    }
-
-    public void setAlbum(Album album) {
-        this.album = album;
-    }
-
-    public void setPlaylists(Set<Playlist> playlists) {
-        this.playlists = playlists;
     }
 }
