@@ -38,7 +38,9 @@ public class Genre {
     @OneToMany(mappedBy = "genre")
     private Set<TrackGenre> trackGenres = new LinkedHashSet<>();
 
-    public Genre() {
+    public Genre() {}
 
+    public Genre(String name) {
+        this.name = name;
     }
 }

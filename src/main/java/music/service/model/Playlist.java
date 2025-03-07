@@ -38,7 +38,10 @@ public class Playlist {
     @OneToMany(mappedBy = "playlist")
     private Set<UserPlaylist> userPlaylists = new LinkedHashSet<>();
 
-    public Playlist() {
+    public Playlist() {}
+
+    public Playlist(String name) {
+        this.name = name;
     }
 
 }

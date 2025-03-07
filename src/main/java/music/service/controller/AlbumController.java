@@ -5,8 +5,6 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 import music.service.dto.AlbumResponse;
 import music.service.dto.CreateAlbumRequest;
-import music.service.dto.CreateTrackRequest;
-import music.service.dto.TrackResponse;
 import music.service.model.Album;
 import music.service.service.AlbumService;
 import org.springframework.http.HttpStatus;
