@@ -2,10 +2,14 @@ package music.service.controller;
 
 import java.util.List;
 import java.util.Optional;
-import music.service.dto.TrackDto;
+import java.util.stream.Collectors;
+import javax.validation.Valid;
+
+import music.service.dto.CreateTrackRequest;
+import music.service.dto.TrackResponse;
 import music.service.model.Track;
 import music.service.service.TrackService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,70 +19,67 @@ public class TrackController {
 
     private final TrackService trackService;
 
-    @Autowired
     public TrackController(TrackService trackService) {
         this.trackService = trackService;
     }
 
-    // Get all tracks
     @GetMapping
-    public ResponseEntity<List<Track>> getAllTracks() {
+    public ResponseEntity<List<TrackResponse>> getAllTracks() {
         List<Track> tracks = trackService.getAllTracks();
-        return ResponseEntity.ok(tracks);
+        List<TrackResponse> responses = tracks.stream()
+                .map(trackService::mapToTrackResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 
-    // Get track by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Track> getTrackById(@PathVariable Long id) {
-        Optional<Track> track = trackService.getTrackById(id);
-        return track.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<TrackResponse> getTrackById(@PathVariable Long id) {
+        Optional<Track> trackOpt = trackService.getTrackById(id);
+        return trackOpt.map(track -> ResponseEntity.ok(trackService.mapToTrackResponse(track)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/genre")
-    public ResponseEntity<List<Track>> getTracksByGenre(@RequestParam String genre) {
-        List<Track> tracks = trackService.getTracksByGenre(genre);
-        return ResponseEntity.ok(tracks);
+    @GetMapping("/genres")
+    public ResponseEntity<List<TrackResponse>> getTracksByGenre(@RequestParam String genre) {
+        List<Track> tracks = trackService.getByGenre(genre);
+        List<TrackResponse> responses = tracks.stream()
+                .map(trackService::mapToTrackResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 
-    // Create new track
+    @GetMapping("/albums")
+    public ResponseEntity<List<TrackResponse>> getTracksByAlbum(@RequestParam String album) {
+        List<Track> tracks = trackService.getByAlbum(album);
+        List<TrackResponse> responses = tracks.stream()
+                .map(trackService::mapToTrackResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/playlists")
+    public ResponseEntity<List<TrackResponse>> getTracksByPlaylist(@RequestParam String playlist) {
+        List<Track> tracks = trackService.getByPlaylist(playlist);
+        List<TrackResponse> responses = tracks.stream()
+                .map(trackService::mapToTrackResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<List<TrackResponse>> getTracksByUser(@RequestParam String username) {
+        List<Track> tracks = trackService.getByUser(username);
+        List<TrackResponse> responses = tracks.stream()
+                .map(trackService::mapToTrackResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
     @PostMapping
-    public ResponseEntity<Track> createTrack(@RequestBody TrackDto trackDto) {
-        // Преобразование TrackDTO в Track
-        Track track = new Track(
-                trackDto.getTitle(),
-                trackDto.getArtist(),
-                trackDto.getGenre(),
-                trackDto.getDuration(),
-                trackDto.getReleaseDate()
-        );
-
-        Track savedTrack = trackService.saveTrack(track);
-        return ResponseEntity.ok(savedTrack);
+    public ResponseEntity<TrackResponse> addTrack(
+            @Valid @RequestBody CreateTrackRequest request) {
+        TrackResponse response = trackService.addTrack(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // Update track
-    @PutMapping("/{id}")
-    public ResponseEntity<Track> updateTrack(@PathVariable Long id,
-                                             @RequestBody TrackDto trackDetails) {
-        Optional<Track> optionalTrack = trackService.getTrackById(id);
-        if (!optionalTrack.isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        Track track = optionalTrack.get();
-        track.setTitle(trackDetails.getTitle());
-        track.setArtist(trackDetails.getArtist());
-        track.setGenre(trackDetails.getGenre());
-        track.setDuration(trackDetails.getDuration());
-        track.setReleaseDate(trackDetails.getReleaseDate());
-
-        Track updatedTrack = trackService.saveTrack(track);
-        return ResponseEntity.ok(updatedTrack);
-    }
-
-    // Delete track
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTrack(@PathVariable Long id) {
-        trackService.deleteTrack(id);
-        return ResponseEntity.noContent().build();
-    }
 }

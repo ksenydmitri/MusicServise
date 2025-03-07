@@ -1,20 +1,24 @@
 package music.service.model;
 
-import lombok.Getter;
-import lombok.Setter;
-
-import javax.persistence.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import javax.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
-@Table
+@Table(name = "genres")
 public class Genre {
+
     @Id
-    @GeneratedValue
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "id", nullable = false)
+    private Integer id;
+
+    @Column(name = "name", nullable = false, length = 50)
+    private String name;
 
     @ManyToMany
     @JoinTable(name = "album_genre",
@@ -28,4 +32,13 @@ public class Genre {
             inverseJoinColumns = @JoinColumn(name = "track_id"))
     private Set<Track> tracks = new LinkedHashSet<>();
 
+    @OneToMany(mappedBy = "genre")
+    private Set<AlbumGenre> albumGenres = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "genre")
+    private Set<TrackGenre> trackGenres = new LinkedHashSet<>();
+
+    public Genre() {
+
+    }
 }

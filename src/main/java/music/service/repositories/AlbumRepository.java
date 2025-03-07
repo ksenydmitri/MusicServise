@@ -4,5 +4,5 @@ import music.service.model.Album;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AlbumRepository extends JpaRepository<Album, Long> {
-    Album findByName(String name);
+    Album findByTitle(String title);
 }

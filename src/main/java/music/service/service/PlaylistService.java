@@ -2,6 +2,7 @@ package music.service.service;
 
 import java.util.List;
 import java.util.Optional;
+import music.service.dto.PlaylistResponse;
 import music.service.model.Playlist;
 import music.service.repositories.PlaylistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,5 +32,12 @@ public class PlaylistService {
 
     public void deletePlaylist(Long id) {
         playlistRepository.deleteById(id);
+    }
+
+    public PlaylistResponse mapToPlaylistResponse(Playlist playlist) {
+        PlaylistResponse response = new PlaylistResponse();
+        response.setId(playlist.getId());
+        response.setName(playlist.getName());
+        return response;
     }
 }

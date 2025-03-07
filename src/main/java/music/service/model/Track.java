@@ -1,42 +1,39 @@
 package music.service.model;
 
-
 import java.time.LocalDate;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Getter
 @Setter
 @Entity
-@Table
+@Table(name = "tracks")
 public class Track {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "id", nullable = false)
+    private Integer id;
 
-    @ManyToMany
-    private Set<User> user;
-
-    @Column
+    @Column(name = "title", nullable = false, length = 100)
     private String title;
 
-    @Column
-    private Integer duration;
+    @Column(name = "duration", nullable = false)
+    private Long duration;
 
-    @Column
+    @CreationTimestamp
+    @Column(name = "releaseDate", nullable = false, updatable = false)
     private LocalDate releaseDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "album_id")
     private Album album;
-
-    @ManyToMany(mappedBy = "tracks", cascade = {CascadeType.DETACH,
-        CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-    private Set<Playlist> playlists;
 
     @ManyToMany
     @JoinTable(name = "track_genre",
@@ -45,19 +42,30 @@ public class Track {
     private Set<Genre> genres = new LinkedHashSet<>();
 
     @ManyToMany
+    @JoinTable(name = "track_playlist",
+            joinColumns = @JoinColumn(name = "track_id"),
+            inverseJoinColumns = @JoinColumn(name = "playlist_id"))
+    private Set<Playlist> playlists = new LinkedHashSet<>();
+
+    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.LAZY)
     @JoinTable(name = "user_track",
             joinColumns = @JoinColumn(name = "track_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> users = new LinkedHashSet<>();
 
+    @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<TrackGenre> trackGenres = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "track")
+    private Set<TrackPlaylist> trackPlaylists = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "track")
+    private Set<UserTrack> userTracks = new LinkedHashSet<>();
+
     public Track() {}
 
-    public Track(String title, Set<User> artists, Set<Genre> genres,
-                 Integer duration, LocalDate releaseDate) {
+    public Track(String title, Long duration) {
         this.title = title;
-        this.user = artists;
-        this.genres = genres;
         this.duration = duration;
-        this.releaseDate = releaseDate;
     }
 }

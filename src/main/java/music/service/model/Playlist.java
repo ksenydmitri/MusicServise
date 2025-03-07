@@ -1,9 +1,6 @@
 package music.service.model;
 
-
-import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import javax.persistence.*;
 import lombok.Getter;
@@ -12,14 +9,15 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table
+@Table(name = "playlists")
 public class Playlist {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "id", nullable = false)
+    private Integer id;
 
-    @Column
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
     @ManyToMany
@@ -33,5 +31,14 @@ public class Playlist {
             joinColumns = @JoinColumn(name = "playlist_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> users = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "playlist")
+    private Set<TrackPlaylist> trackPlaylists = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "playlist")
+    private Set<UserPlaylist> userPlaylists = new LinkedHashSet<>();
+
+    public Playlist() {
+    }
 
 }
