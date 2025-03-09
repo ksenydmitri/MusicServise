@@ -32,12 +32,6 @@ public class Playlist {
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> users = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "playlist", cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
-    private Set<TrackPlaylist> trackPlaylists = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "playlist", cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
-    private Set<UsersPlaylists> userPlaylists = new LinkedHashSet<>();
-
     public Playlist() {}
 
     public Playlist(String name) {

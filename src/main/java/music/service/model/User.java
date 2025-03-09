@@ -47,15 +47,6 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "track_id"))
     private Set<Track> tracks = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<UserAlbum> userAlbums = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<UsersPlaylists> userPlaylists = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<UserTrack> userTracks = new LinkedHashSet<>();
-
     public User() {}
 
     public User(String username, String password, String email, String role) {

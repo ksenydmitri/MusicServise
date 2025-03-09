@@ -48,12 +48,6 @@ public class Track {
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> users = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<TrackPlaylist> trackPlaylists = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<UserTrack> userTracks = new LinkedHashSet<>();
-
     public Track() {}
 
     public Track(String title, int duration) {

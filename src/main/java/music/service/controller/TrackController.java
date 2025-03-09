@@ -88,4 +88,9 @@ public class TrackController {
         return ResponseEntity.ok(updatedTrack);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTrack(@PathVariable Long id) {
+        trackService.deleteTrack(id);
+        return ResponseEntity.noContent().build();
+    }
 }

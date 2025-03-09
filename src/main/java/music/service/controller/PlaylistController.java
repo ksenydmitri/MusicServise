@@ -42,7 +42,7 @@ public class PlaylistController {
             @Valid @RequestBody CreatePlaylistRequest request) {
         Playlist playlist = new Playlist();
         playlist.setName(request.getName());
-        Playlist savedPlaylist = playlistService.savePlaylist(playlist);
+        Playlist savedPlaylist = playlistService.savePlaylist(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(playlistService.mapToPlaylistResponse(savedPlaylist));
     }

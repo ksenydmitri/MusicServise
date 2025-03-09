@@ -3,8 +3,7 @@ package music.service.service;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
-import music.service.dto.AlbumResponse;
-import music.service.dto.CreateAlbumRequest;
+import music.service.dto.*;
 import music.service.model.Album;
 import music.service.model.Track;
 import music.service.model.User;
@@ -26,16 +25,6 @@ public class AlbumService {
 
     public List<Album> getAllAlbums() {
         return albumRepository.findAll();
-    }
-
-    public Album addAlbumToUser(Long userId, Album album) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        album.getUsers().add(user);
-        Album savedAlbum = albumRepository.save(album);
-        user.getAlbums().add(savedAlbum);
-        userRepository.save(user);
-        return savedAlbum;
     }
 
     public AlbumResponse mapToAlbumResponse(Album album) {
@@ -61,13 +50,37 @@ public class AlbumService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Album album = new Album(request.getTitle());
+        Album album = new Album(request.getName());
         if (!album.getUsers().contains(user)) {
             album.getUsers().add(user);
         }
         Album savedAlbum = albumRepository.save(album);
 
         return mapToAlbumResponse(savedAlbum);
+    }
+
+    @Transactional
+    public AlbumResponse updateAlbum (Long albumId, UpdateAlbumRequest request) {
+        Album album = albumRepository.findById(albumId)
+                .orElseThrow(() -> new RuntimeException("Album not found"));
+
+        if (request.getName() != null) {
+            album.setTitle(request.getName());
+        }
+        if (request.getUserId() != null) {
+            User user = userRepository.findById(request.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            if (!album.getUsers().contains(user)) {
+                album.getUsers().add(user);
+            }
+        }
+        Album savedAlbum = albumRepository.save(album);
+        return mapToAlbumResponse(savedAlbum);
+    }
+
+    @Transactional
+    public void deleteAlbum(Long albumId) {
+        albumRepository.deleteById(albumId);
     }
 
 }

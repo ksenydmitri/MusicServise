@@ -1,14 +1,15 @@
 package music.service.service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import music.service.dto.CreateUserRequest;
 import music.service.dto.UpdateUserRequest;
 import music.service.dto.UserResponse;
-import music.service.model.Album;
-import music.service.model.Track;
-import music.service.model.User;
+import music.service.model.*;
+import music.service.repositories.AlbumRepository;
+import music.service.repositories.TrackRepository;
 import music.service.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,10 +18,15 @@ import org.springframework.stereotype.Service;
 public class UserService {
     private static final String USER_NOT_FOUND = "User not found";
     private final UserRepository userRepository;
+    private final AlbumRepository albumRepository;
+    private final TrackRepository trackRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, AlbumService albumService,
+                       AlbumRepository albumRepository, TrackRepository trackRepository) {
         this.userRepository = userRepository;
+        this.albumRepository = albumRepository;
+        this.trackRepository  = trackRepository;
     }
 
     public User createUser(CreateUserRequest request) {
@@ -61,13 +67,6 @@ public class UserService {
         return mapToUserResponse(updatedUser);
     }
 
-    @Transactional
-    public void deleteUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
-        userRepository.delete(user);
-    }
-
     public UserResponse mapToUserResponse(User user) {
         UserResponse response = new UserResponse();
         response.setId(user.getId());
@@ -87,6 +86,28 @@ public class UserService {
         User user = userRepository.findByUsernameOrEmail(query, query)
                 .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
         return mapToUserResponse(user);
+    }
+
+    @Transactional
+    public void removeUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
+
+        for (Album album : user.getAlbums()) {
+            album.getUsers().remove(user);
+
+            if (album.getUsers().isEmpty()) {
+                albumRepository.delete(album);
+            }
+        }
+        for (Track track : user.getTracks()) {
+            track.getUsers().remove(user);
+
+            if (track.getUsers().isEmpty()) {
+                trackRepository.delete(track); // Удаляем трек, если у него больше нет пользователей
+            }
+        }
+        userRepository.delete(user);
     }
 
 }

@@ -23,7 +23,8 @@ public class Album {
     @Column(name = "genre")
     private String genre;
 
-    @OneToMany(mappedBy = "album", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "album",
+            cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private Set<Track> tracks = new LinkedHashSet<>();
 
     @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.LAZY)
@@ -31,9 +32,6 @@ public class Album {
             joinColumns = @JoinColumn(name = "album_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> users = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "album", cascade = CascadeType.ALL)
-    private Set<UserAlbum> userAlbums = new LinkedHashSet<>();
 
     public Album() {
 

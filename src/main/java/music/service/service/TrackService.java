@@ -59,9 +59,7 @@ public class TrackService {
         Album album = albumRepository.findById(request.getAlbumId())
                 .orElseThrow(() -> new RuntimeException("Album not found"));
 
-        Track track = trackRepository.findByTitle(request.getTitle())
-                .orElseGet(() -> new Track(request.getTitle(), request.getDuration()));
-
+        Track track = new Track(request.getTitle(), request.getDuration());
         if (!track.getUsers().contains(user)) {
             track.getUsers().add(user);
         }
@@ -116,6 +114,18 @@ public class TrackService {
         }
         Track savedTrack = trackRepository.save(track);
         return mapToTrackResponse(savedTrack);
+    }
+
+    @Transactional
+    public void deleteTrack(Long trackId) {
+        Track track = trackRepository.findById(trackId)
+                .orElseThrow(() -> new RuntimeException("Track not found"));
+
+        if (!track.getUsers().isEmpty()) {
+            track.getUsers().clear(); // Очищаем связи перед удалением
+            trackRepository.save(track); // Сохраняем изменения
+        }
+        trackRepository.delete(track);
     }
 
 

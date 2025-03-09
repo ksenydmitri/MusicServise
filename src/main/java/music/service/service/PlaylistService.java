@@ -37,7 +37,9 @@ public class PlaylistService {
         return playlistRepository.findById(id);
     }
 
-    public Playlist savePlaylist(Playlist playlist) {
+    public Playlist savePlaylist(CreatePlaylistRequest request) {
+        Playlist playlist = new Playlist();
+        playlist.setName(request.getName());
         return playlistRepository.save(playlist);
     }
 

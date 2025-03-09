@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class CreateAlbumRequest {
     @NotBlank(message = "Title is required")
-    private String title;
+    private String name;
 
     @NotNull(message = "User ID is required")
     private Long userId;

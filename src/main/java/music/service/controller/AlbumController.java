@@ -3,8 +3,8 @@ package music.service.controller;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
-import music.service.dto.AlbumResponse;
-import music.service.dto.CreateAlbumRequest;
+
+import music.service.dto.*;
 import music.service.model.Album;
 import music.service.service.AlbumService;
 import org.springframework.http.HttpStatus;
@@ -41,5 +41,19 @@ public class AlbumController {
             @Valid @RequestBody CreateAlbumRequest request) {
         AlbumResponse response = albumService.addAlbum(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<AlbumResponse> patchAlbum(
+            @PathVariable Long id,
+            @RequestBody UpdateAlbumRequest request) {
+        AlbumResponse response = albumService.updateAlbum(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAlbum(@PathVariable Long id) {
+        albumService.deleteAlbum(id);
+        return ResponseEntity.noContent().build();
     }
 }
