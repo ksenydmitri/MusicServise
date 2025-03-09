@@ -72,48 +72,70 @@ public class TrackService {
 
     @Transactional
     public TrackResponse updateTrack(Long trackId, UpdateTrackRequest request) {
+        validateInput(trackId, request);
+
+        Track track = trackRepository.findById(trackId)
+                .orElseThrow(() -> new RuntimeException("Track not found"));
+
+        updateTrackTitle(track, request.getTitle());
+        updateTrackGenre(track, request.getGenre());
+        updateTrackDuration(track, request.getDuration());
+        addPlaylistToTrack(track, request.getPlaylistId());
+        addUserToTrack(track, request.getUserId());
+
+        Track savedTrack = trackRepository.save(track);
+        return mapToTrackResponse(savedTrack);
+    }
+
+    private void validateInput(Long trackId, UpdateTrackRequest request) {
         if (trackId == null) {
             throw new IllegalArgumentException("Track ID must not be null");
         }
         if (request == null) {
             throw new IllegalArgumentException("Request body must not be null");
         }
+    }
 
-        Track track = trackRepository.findById(trackId)
-                .orElseThrow(() -> new RuntimeException("Track not found"));
-
-        if (request.getTitle() != null && !request.getTitle().isEmpty()) {
-            track.setTitle(request.getTitle());
-        } else if (request.getTitle() != null) {
+    private void updateTrackTitle(Track track, String title) {
+        if (title != null && !title.isEmpty()) {
+            track.setTitle(title);
+        } else if (title != null) {
             throw new IllegalArgumentException("Track title must not be empty");
         }
+    }
 
-        if (request.getGenre() != null && !request.getGenre().isEmpty()) {
-            track.setGenre(request.getGenre());
-        } else if (request.getGenre() != null) {
+    private void updateTrackGenre(Track track, String genre) {
+        if (genre != null && !genre.isEmpty()) {
+            track.setGenre(genre);
+        } else if (genre != null) {
             throw new IllegalArgumentException("Track genre must not be empty");
         }
+    }
 
-        if (request.getDuration() > 0) {
-            track.setDuration(request.getDuration());
+    private void updateTrackDuration(Track track, int duration) {
+        if (duration > 0) {
+            track.setDuration(duration);
         }
+    }
 
-        if (request.getPlaylistId() != null) {
-            Playlist playlist = playlistRepository.findById(request.getPlaylistId())
+    private void addPlaylistToTrack(Track track, Long playlistId) {
+        if (playlistId != null) {
+            Playlist playlist = playlistRepository.findById(playlistId)
                     .orElseThrow(() -> new RuntimeException("Playlist not found"));
             if (!track.getPlaylists().contains(playlist)) {
                 track.getPlaylists().add(playlist);
             }
         }
-        if (request.getUserId() != null) {
-            User user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new RuntimeException("Playlist not found"));
+    }
+
+    private void addUserToTrack(Track track, Long userId) {
+        if (userId != null) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
             if (!track.getUsers().contains(user)) {
                 track.getUsers().add(user);
             }
         }
-        Track savedTrack = trackRepository.save(track);
-        return mapToTrackResponse(savedTrack);
     }
 
     @Transactional
@@ -121,10 +143,14 @@ public class TrackService {
         Track track = trackRepository.findById(trackId)
                 .orElseThrow(() -> new RuntimeException("Track not found"));
 
-        if (!track.getUsers().isEmpty()) {
-            track.getUsers().clear(); // Очищаем связи перед удалением
-            trackRepository.save(track); // Сохраняем изменения
+        for (Playlist playlist : track.getPlaylists()) {
+            playlist.getTracks().remove(track);
         }
+
+        for (User user : track.getUsers()) {
+            user.getTracks().remove(track);
+        }
+
         trackRepository.delete(track);
     }
 

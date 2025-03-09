@@ -80,6 +80,12 @@ public class AlbumService {
 
     @Transactional
     public void deleteAlbum(Long albumId) {
+
+        Album album = getAlbumById(albumId);
+
+        for (User user : album.getUsers()) {
+            album.getUsers().remove(user);
+        }
         albumRepository.deleteById(albumId);
     }
 

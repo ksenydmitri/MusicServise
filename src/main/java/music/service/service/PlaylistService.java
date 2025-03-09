@@ -43,8 +43,20 @@ public class PlaylistService {
         return playlistRepository.save(playlist);
     }
 
+    @Transactional
     public void deletePlaylist(Long id) {
-        playlistRepository.deleteById(id);
+        Playlist playlist = playlistRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Playlist not found"));
+
+        for (Track track : playlist.getTracks()) {
+            playlist.getTracks().remove(track);
+        }
+
+        for (User user : playlist.getUsers()) {
+            playlist.getUsers().remove(user);
+        }
+
+        playlistRepository.delete(playlist);
     }
 
     public PlaylistResponse mapToPlaylistResponse(Playlist playlist) {
@@ -65,17 +77,38 @@ public class PlaylistService {
         Playlist playlist = playlistRepository.findById(playlistId)
                 .orElseThrow(() -> new RuntimeException("Playlist not found"));
 
-        if (request.getName() != null) {
-            playlist.setName(request.getName());
+        updatePlaylistName(playlist, request.getName());
+        addUserToPlaylist(playlist, request.getUserId());
+        addTrackToPlaylist(playlist, request.getTrackId());
+
+        Playlist savedPlaylist = playlistRepository.save(playlist);
+        return mapToPlaylistResponse(savedPlaylist);
+    }
+
+    private void updatePlaylistName(Playlist playlist, String name) {
+        if (name != null) {
+            playlist.setName(name);
         }
-        if (request.getUserId() != null) {
-            User user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new RuntimeException("Playlist not found"));
+    }
+
+    private void addUserToPlaylist(Playlist playlist, Long userId) {
+        if (userId != null) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
             if (!playlist.getUsers().contains(user)) {
                 playlist.getUsers().add(user);
             }
         }
-        Playlist savedPlaylist = playlistRepository.save(playlist);
-        return mapToPlaylistResponse(savedPlaylist);
     }
+
+    private void addTrackToPlaylist(Playlist playlist, Long trackId) {
+        if (trackId != null) {
+            Track track = trackRepository.findById(trackId)
+                    .orElseThrow(() -> new RuntimeException("Track not found"));
+            if (!playlist.getTracks().contains(track)) {
+                playlist.getTracks().add(track);
+            }
+        }
+    }
+
 }
