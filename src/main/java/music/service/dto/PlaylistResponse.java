@@ -1,12 +1,8 @@
 package music.service.dto;
 
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import music.service.model.Track;
-import music.service.model.User;
-
-import java.util.List;
-import java.util.Set;
 
 @Getter
 @Setter

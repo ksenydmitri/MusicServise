@@ -3,9 +3,8 @@ package music.service.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
+import javax.transaction.Transactional;
 import music.service.dto.*;
-import music.service.model.Album;
 import music.service.model.Playlist;
 import music.service.model.Track;
 import music.service.model.User;
@@ -15,8 +14,6 @@ import music.service.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
-
 @Service
 public class PlaylistService {
 
@@ -25,7 +22,8 @@ public class PlaylistService {
     private final UserRepository userRepository;
 
     @Autowired
-    public PlaylistService(PlaylistRepository playlistRepository, TrackRepository trackRepository, UserRepository userRepository) {
+    public PlaylistService(PlaylistRepository playlistRepository,
+                           TrackRepository trackRepository, UserRepository userRepository) {
         this.playlistRepository = playlistRepository;
         this.trackRepository = trackRepository;
         this.userRepository = userRepository;

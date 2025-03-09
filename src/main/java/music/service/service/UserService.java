@@ -1,5 +1,8 @@
 package music.service.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.transaction.Transactional;
 import music.service.dto.CreateUserRequest;
 import music.service.dto.UpdateUserRequest;
 import music.service.dto.UserResponse;
@@ -9,12 +12,10 @@ import music.service.model.User;
 import music.service.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import javax.transaction.Transactional;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class UserService {
+    private static final String USER_NOT_FOUND = "User not found";
     private final UserRepository userRepository;
 
     @Autowired
@@ -33,7 +34,7 @@ public class UserService {
 
     public User getUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
     }
 
     public List<User> getAllUsers() {
@@ -43,7 +44,7 @@ public class UserService {
     @Transactional
     public UserResponse updateUser(Long userId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
         if (request.getUsername() != null) {
             user.setUsername(request.getUsername());
         }
@@ -63,7 +64,7 @@ public class UserService {
     @Transactional
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
         userRepository.delete(user);
     }
 
@@ -84,7 +85,7 @@ public class UserService {
 
     public UserResponse findByUsernameOrEmail(String query) {
         User user = userRepository.findByUsernameOrEmail(query, query)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
         return mapToUserResponse(user);
     }
 

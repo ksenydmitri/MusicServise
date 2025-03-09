@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
-
 import music.service.dto.*;
 import music.service.model.*;
 import music.service.repositories.*;
@@ -20,7 +19,8 @@ public class TrackService {
     private final PlaylistRepository playlistRepository;
 
     @Autowired
-    public TrackService(TrackRepository trackRepository, AlbumRepository albumRepository, UserRepository userRepository, PlaylistRepository playlistRepository) {
+    public TrackService(TrackRepository trackRepository, AlbumRepository albumRepository,
+                        UserRepository userRepository, PlaylistRepository playlistRepository) {
         this.trackRepository = trackRepository;
         this.albumRepository = albumRepository;
         this.userRepository = userRepository;

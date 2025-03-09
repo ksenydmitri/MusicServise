@@ -1,13 +1,12 @@
 package music.service.model;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.Hibernate;
-
+import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.validation.constraints.NotNull;
-import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.Hibernate;
 
 @Getter
 @Setter
@@ -24,11 +23,15 @@ public class TrackPlaylistId implements java.io.Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) {
+            return false;
+        }
         TrackPlaylistId entity = (TrackPlaylistId) o;
-        return Objects.equals(this.playlistId, entity.playlistId) &&
-                Objects.equals(this.trackId, entity.trackId);
+        return Objects.equals(this.playlistId, entity.playlistId)
+                && Objects.equals(this.trackId, entity.trackId);
     }
 
     @Override

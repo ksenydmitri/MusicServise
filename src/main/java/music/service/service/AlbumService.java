@@ -2,11 +2,9 @@ package music.service.service;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
+import javax.transaction.Transactional;
 import music.service.dto.AlbumResponse;
 import music.service.dto.CreateAlbumRequest;
-import music.service.dto.CreateTrackRequest;
-import music.service.dto.TrackResponse;
 import music.service.model.Album;
 import music.service.model.Track;
 import music.service.model.User;
@@ -14,8 +12,6 @@ import music.service.repositories.AlbumRepository;
 import music.service.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import javax.transaction.Transactional;
 
 @Service
 public class AlbumService {

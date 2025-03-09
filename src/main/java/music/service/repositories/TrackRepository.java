@@ -1,12 +1,11 @@
 package music.service.repositories;
 
+import java.util.List;
+import java.util.Optional;
+import javax.validation.constraints.NotBlank;
 import music.service.model.Track;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import javax.validation.constraints.NotBlank;
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface TrackRepository extends JpaRepository<Track, Long> {
