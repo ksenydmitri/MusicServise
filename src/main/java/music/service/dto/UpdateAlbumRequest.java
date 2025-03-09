@@ -7,6 +7,6 @@ import lombok.Setter;
 @Setter
 public class UpdateAlbumRequest {
     private String name;
-    public Long userId;
-    public Long trackId;
+    private Long userId;
+    private Long trackId;
 }
