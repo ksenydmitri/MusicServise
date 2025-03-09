@@ -9,10 +9,12 @@ import java.util.List;
 @Getter
 @Setter
 public class TrackResponse {
-    private Integer id;
+    private Long id;
     private String title;
-    private Long duration;
+    private int duration;
+    private String genre;
     private LocalDate releaseDate;
     private String albumTitle;
     private List<String> usernames;
+    private List<String> playlists;
 }

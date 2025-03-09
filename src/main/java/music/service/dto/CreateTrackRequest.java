@@ -12,7 +12,10 @@ public class CreateTrackRequest {
     private String title;
 
     @NotNull(message = "Duration is required")
-    private Long duration;
+    private int duration;
+
+    @NotNull(message = "User ID is required")
+    private String genre;
 
     @NotNull(message = "User ID is required")
     private Long albumId;

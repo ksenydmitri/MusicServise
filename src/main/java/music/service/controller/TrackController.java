@@ -5,8 +5,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 
-import music.service.dto.CreateTrackRequest;
-import music.service.dto.TrackResponse;
+import music.service.dto.*;
 import music.service.model.Track;
 import music.service.service.TrackService;
 import org.springframework.http.HttpStatus;
@@ -80,6 +79,14 @@ public class TrackController {
             @Valid @RequestBody CreateTrackRequest request) {
         TrackResponse response = trackService.addTrack(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<TrackResponse> patchTrack(
+            @PathVariable Long id,
+            @RequestBody UpdateTrackRequest request) {
+        TrackResponse updatedTrack = trackService.updateTrack(id, request);
+        return ResponseEntity.ok(updatedTrack);
     }
 
 }

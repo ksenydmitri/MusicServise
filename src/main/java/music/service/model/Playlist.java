@@ -15,28 +15,28 @@ public class Playlist {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @ManyToMany
-    @JoinTable(name = "track_playlist",
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "tracks_playlists",
             joinColumns = @JoinColumn(name = "playlist_id"),
             inverseJoinColumns = @JoinColumn(name = "track_id"))
     private Set<Track> tracks = new LinkedHashSet<>();
 
-    @ManyToMany
-    @JoinTable(name = "user_playlist",
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "users_playlists",
             joinColumns = @JoinColumn(name = "playlist_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> users = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "playlist")
+    @OneToMany(mappedBy = "playlist", cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     private Set<TrackPlaylist> trackPlaylists = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "playlist")
-    private Set<UserPlaylist> userPlaylists = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "playlist", cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
+    private Set<UsersPlaylists> userPlaylists = new LinkedHashSet<>();
 
     public Playlist() {}
 
@@ -45,3 +45,4 @@ public class Playlist {
     }
 
 }
+

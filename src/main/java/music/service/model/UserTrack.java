@@ -8,7 +8,7 @@ import javax.persistence.*;
 @Getter
 @Setter
 @Entity
-@Table(name = "user_track")
+@Table(name = "users_tracks")
 public class UserTrack {
     @EmbeddedId
     private UserTrackId id;

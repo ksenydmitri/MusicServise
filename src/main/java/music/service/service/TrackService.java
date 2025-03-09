@@ -5,14 +5,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
-import music.service.dto.CreateTrackRequest;
-import music.service.dto.TrackResponse;
-import music.service.model.Album;
-import music.service.model.Track;
-import music.service.model.User;
-import music.service.repositories.AlbumRepository;
-import music.service.repositories.TrackRepository;
-import music.service.repositories.UserRepository;
+
+import music.service.dto.*;
+import music.service.model.*;
+import music.service.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,12 +17,14 @@ public class TrackService {
     private final TrackRepository trackRepository;
     private final AlbumRepository albumRepository;
     private final UserRepository userRepository;
+    private final PlaylistRepository playlistRepository;
 
     @Autowired
-    public TrackService(TrackRepository trackRepository, AlbumRepository albumRepository, UserRepository userRepository) {
+    public TrackService(TrackRepository trackRepository, AlbumRepository albumRepository, UserRepository userRepository, PlaylistRepository playlistRepository) {
         this.trackRepository = trackRepository;
         this.albumRepository = albumRepository;
         this.userRepository = userRepository;
+        this.playlistRepository = playlistRepository;
     }
 
     public List<Track> getAllTracks() {
@@ -34,11 +32,11 @@ public class TrackService {
     }
 
     public Optional<Track> getTrackById(Long id) {
-        return trackRepository.findById(id.intValue());
+        return trackRepository.findById(id);
     }
 
     public List<Track> getByGenre(String genre) {
-        return trackRepository.findByGenresName(genre);
+        return trackRepository.findByGenre(genre);
     }
 
     public List<Track> getByAlbum(String album) {
@@ -74,6 +72,52 @@ public class TrackService {
         return mapToTrackResponse(savedTrack);
     }
 
+    @Transactional
+    public TrackResponse updateTrack(Long trackId, UpdateTrackRequest request) {
+        if (trackId == null) {
+            throw new IllegalArgumentException("Track ID must not be null");
+        }
+        if (request == null) {
+            throw new IllegalArgumentException("Request body must not be null");
+        }
+
+        Track track = trackRepository.findById(trackId)
+                .orElseThrow(() -> new RuntimeException("Track not found"));
+
+        if (request.getTitle() != null && !request.getTitle().isEmpty()) {
+            track.setTitle(request.getTitle());
+        } else if (request.getTitle() != null) {
+            throw new IllegalArgumentException("Track title must not be empty");
+        }
+
+        if (request.getGenre() != null && !request.getGenre().isEmpty()) {
+            track.setGenre(request.getGenre());
+        } else if (request.getGenre() != null) {
+            throw new IllegalArgumentException("Track genre must not be empty");
+        }
+
+        if (request.getDuration() > 0) {
+            track.setDuration(request.getDuration());
+        }
+
+        if (request.getPlaylistId() != null) {
+            Playlist playlist = playlistRepository.findById(request.getPlaylistId())
+                    .orElseThrow(() -> new RuntimeException("Playlist not found"));
+            if (!track.getPlaylists().contains(playlist)) {
+                track.getPlaylists().add(playlist);
+            }
+        }
+        if (request.getUserId() != null) {
+            User user = userRepository.findById(request.getUserId())
+                    .orElseThrow(() -> new RuntimeException("Playlist not found"));
+            if (!track.getUsers().contains(user)) {
+                track.getUsers().add(user);
+            }
+        }
+        Track savedTrack = trackRepository.save(track);
+        return mapToTrackResponse(savedTrack);
+    }
+
 
     public TrackResponse mapToTrackResponse(Track track) {
         TrackResponse response = new TrackResponse();
@@ -85,6 +129,10 @@ public class TrackService {
                 .map(User::getUsername)
                 .collect(Collectors.toList()));
         response.setReleaseDate(track.getReleaseDate());
+        response.setPlaylists(track.getPlaylists().stream()
+                .map(Playlist::getName)
+                .collect(Collectors.toList()));
+        response.setGenre(track.getGenre());
         return response;
     }
 

@@ -5,7 +5,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class GenreResponse {
-    private Integer id;
+public class UpdatePlaylistRequest {
     private String name;
+    private Long userId;
+    private Long trackId;
 }

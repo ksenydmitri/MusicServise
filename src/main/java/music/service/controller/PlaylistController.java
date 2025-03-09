@@ -3,8 +3,8 @@ package music.service.controller;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
-import music.service.dto.CreatePlaylistRequest;
-import music.service.dto.PlaylistResponse;
+
+import music.service.dto.*;
 import music.service.model.Playlist;
 import music.service.service.PlaylistService;
 import org.springframework.http.HttpStatus;
@@ -46,6 +46,14 @@ public class PlaylistController {
         Playlist savedPlaylist = playlistService.savePlaylist(playlist);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(playlistService.mapToPlaylistResponse(savedPlaylist));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<PlaylistResponse> patchPlaylist(
+            @PathVariable Long id,
+            @RequestBody UpdatePlaylistRequest request) {
+        PlaylistResponse response = playlistService.updatePlaylist(id, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

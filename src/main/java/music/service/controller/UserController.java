@@ -44,11 +44,35 @@ public class UserController {
                 .body(userService.mapToUserResponse(savedUser));
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<UserResponse> findByUsernameOrEmail(@RequestParam String query) {
+        UserResponse user = userService.findByUsernameOrEmail(query);
+        return ResponseEntity.ok(user);
+    }
+
+
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> updateUserEmail(
+    public ResponseEntity<UserResponse> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest request) {
-        User updatedUser = userService.updateUserEmail(id, request.getEmail());
-        return ResponseEntity.ok(userService.mapToUserResponse(updatedUser));
+        UserResponse updatedUser = userService.updateUser(id, request);
+        return ResponseEntity.ok(updatedUser);
     }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<UserResponse> patchUser(
+            @PathVariable Long id,
+            @RequestBody UpdateUserRequest request) {
+        UserResponse updatedUser = userService.updateUser(id, request);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
 }

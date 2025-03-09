@@ -1,6 +1,7 @@
 package music.service.service;
 
 import music.service.dto.CreateUserRequest;
+import music.service.dto.UpdateUserRequest;
 import music.service.dto.UserResponse;
 import music.service.model.Album;
 import music.service.model.Track;
@@ -8,6 +9,7 @@ import music.service.model.User;
 import music.service.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,11 +40,31 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User updateUserEmail(Long userId, String newEmail) {
+    @Transactional
+    public UserResponse updateUser(Long userId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        user.setEmail(newEmail);
-        return userRepository.save(user);
+        if (request.getUsername() != null) {
+            user.setUsername(request.getUsername());
+        }
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail());
+        }
+        if (request.getPassword() != null) {
+            user.setPassword(request.getPassword());
+        }
+        if (request.getRole() != null) {
+            user.setRole(request.getRole());
+        }
+        User updatedUser = userRepository.save(user);
+        return mapToUserResponse(updatedUser);
+    }
+
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        userRepository.delete(user);
     }
 
     public UserResponse mapToUserResponse(User user) {
@@ -59,4 +81,11 @@ public class UserService {
                 .collect(Collectors.toList()));
         return response;
     }
+
+    public UserResponse findByUsernameOrEmail(String query) {
+        User user = userRepository.findByUsernameOrEmail(query, query)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return mapToUserResponse(user);
+    }
+
 }

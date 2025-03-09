@@ -30,19 +30,19 @@ public class User {
     private String role;
 
     @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.LAZY)
-    @JoinTable(name = "user_album",
+    @JoinTable(name = "users_albums",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "album_id"))
     private Set<Album> albums = new LinkedHashSet<>();
 
-    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.LAZY)
-    @JoinTable(name = "user_playlist",
+    @ManyToMany
+    @JoinTable(name = "users_playlists",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "playlist_id"))
     private Set<Playlist> playlists = new LinkedHashSet<>();
 
     @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.LAZY)
-    @JoinTable(name = "user_track",
+    @JoinTable(name = "users_tracks",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "track_id"))
     private Set<Track> tracks = new LinkedHashSet<>();
@@ -51,7 +51,7 @@ public class User {
     private Set<UserAlbum> userAlbums = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<UserPlaylist> userPlaylists = new LinkedHashSet<>();
+    private Set<UsersPlaylists> userPlaylists = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<UserTrack> userTracks = new LinkedHashSet<>();

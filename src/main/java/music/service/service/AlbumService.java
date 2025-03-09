@@ -32,10 +32,6 @@ public class AlbumService {
         return albumRepository.findAll();
     }
 
-    public Album getAlbumByTitle(String title) {
-        return albumRepository.findByTitle(title);
-    }
-
     public Album addAlbumToUser(Long userId, Album album) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

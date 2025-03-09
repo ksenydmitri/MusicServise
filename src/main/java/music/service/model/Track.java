@@ -17,52 +17,46 @@ public class Track {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "title", nullable = false, length = 100)
     private String title;
 
     @Column(name = "duration", nullable = false)
-    private Long duration;
+    private int duration;
 
     @CreationTimestamp
-    @Column(name = "releaseDate", nullable = false, updatable = false)
+    @Column(name = "release_date", nullable = false, updatable = false)
     private LocalDate releaseDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinColumn(name = "album_id")
     private Album album;
 
-    @ManyToMany
-    @JoinTable(name = "track_genre",
-            joinColumns = @JoinColumn(name = "track_id"),
-            inverseJoinColumns = @JoinColumn(name = "genre_id"))
-    private Set<Genre> genres = new LinkedHashSet<>();
+    @Column(name = "genre")
+    private String genre;
 
-    @ManyToMany
-    @JoinTable(name = "track_playlist",
+    @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
+    @JoinTable(name = "tracks_playlists",
             joinColumns = @JoinColumn(name = "track_id"),
             inverseJoinColumns = @JoinColumn(name = "playlist_id"))
     private Set<Playlist> playlists = new LinkedHashSet<>();
 
     @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.LAZY)
-    @JoinTable(name = "user_track",
+    @JoinTable(name = "users_tracks",
             joinColumns = @JoinColumn(name = "track_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> users = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<TrackGenre> trackGenres = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "track")
     private Set<TrackPlaylist> trackPlaylists = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "track")
+    @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<UserTrack> userTracks = new LinkedHashSet<>();
 
     public Track() {}
 
-    public Track(String title, Long duration) {
+    public Track(String title, int duration) {
         this.title = title;
         this.duration = duration;
     }

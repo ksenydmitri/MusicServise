@@ -8,8 +8,8 @@ import javax.persistence.*;
 @Getter
 @Setter
 @Entity
-@Table(name = "user_playlist")
-public class UserPlaylist {
+@Table(name = "users_playlists")
+public class UsersPlaylists {
     @EmbeddedId
     private UserPlaylistId id;
 
