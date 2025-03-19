@@ -1,7 +1,6 @@
 package music.service.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 
 import music.service.dto.AlbumResponse;
@@ -115,7 +114,7 @@ public class UserService {
             track.getUsers().remove(user);
 
             if (track.getUsers().isEmpty()) {
-                trackRepository.delete(track); // Удаляем трек, если у него больше нет пользователей
+                trackRepository.delete(track);
             }
         }
         userRepository.delete(user);

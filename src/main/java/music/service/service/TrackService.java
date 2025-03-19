@@ -1,76 +1,86 @@
 package music.service.service;
 
-
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import music.service.dto.*;
 import music.service.model.*;
 import music.service.repositories.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class TrackService {
+    private static final Logger logger = LoggerFactory.getLogger(TrackService.class);
     private final TrackRepository trackRepository;
     private final AlbumRepository albumRepository;
     private final UserRepository userRepository;
     private final PlaylistRepository playlistRepository;
+    private final CacheService cacheService;
 
     @Autowired
     public TrackService(TrackRepository trackRepository, AlbumRepository albumRepository,
-                        UserRepository userRepository, PlaylistRepository playlistRepository){
+                        UserRepository userRepository, PlaylistRepository playlistRepository,
+                        CacheService cacheService) {
         this.trackRepository = trackRepository;
         this.albumRepository = albumRepository;
         this.userRepository = userRepository;
         this.playlistRepository = playlistRepository;
+        this.cacheService = cacheService;
     }
 
-    public List<Track> getAllTracks() {
-        return trackRepository.findAll();
-    }
+    @Transactional
+    public List<Track> getAllTracks(String username, String albumTitle, String title,
+                                    String genre, String playlistName) {
+        String cacheKey = buildTracksCacheKey(username, albumTitle, title, genre, playlistName);
 
-    public Optional<Track> getTrackById(Long id) {
-        return trackRepository.findById(id);
-    }
-
-    public List<Track> getByGenre(String genre) {
-        return trackRepository.findByGenre(genre);
-    }
-
-    public List<Track> getByAlbum(String album) {
-        return trackRepository.findByAlbumTitle(album);
-    }
-
-    public List<Track> getByPlaylist(String playlist) {
-        return trackRepository.findByPlaylistsName(playlist);
-    }
-
-    public List<Track> getByUser(String username) {
-        return trackRepository.findByUsersUsername(username);
-    }
-
-    /*@Transactional
-    public TrackResponse addTrack(CreateTrackRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Album album = albumRepository.findById(request.getAlbumId())
-                .orElseThrow(() -> new RuntimeException("Album not found"));
-
-        Track track = new Track(request.getTitle(), request.getDuration());
-        if (!track.getUsers().contains(user)) {
-            track.getUsers().add(user);
+        if (cacheService.containsKey(cacheKey)) {
+            logger.debug("Cache hit for key: {}", cacheKey);
+            return (List<Track>) cacheService.get(cacheKey);
         }
-        track.setAlbum(album);
-        track.setGenre(request.getGenre());
-        album.getTracks().add(track);
-        Track savedTrack = trackRepository.save(track);
 
-        return mapToTrackResponse(savedTrack);
-    }*/
+        List<Track> tracks = fetchTracksFromDatabase(
+                username, albumTitle, title, genre, playlistName);
+        cacheService.put(cacheKey, tracks);
+        return tracks;
+    }
+
+    private List<Track> fetchTracksFromDatabase(String username, String albumTitle,
+                                                String title, String genre, String playlistName) {
+        Specification<Track> specification = Specification.where(null);
+
+        if (username != null && !username.isEmpty()) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.join("users").get("username"), username));
+        }
+
+        if (albumTitle != null && !albumTitle.isEmpty()) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.join("album").get("title"), albumTitle));
+        }
+
+        if (title != null && !title.isEmpty()) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("title"), title));
+        }
+
+        if (genre != null && !genre.isEmpty()) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("genre"), genre));
+        }
+
+        if (playlistName != null) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.join("playlists").get("id"), playlistName));
+        }
+
+        return trackRepository.findAll(specification);
+    }
+
 
     @Transactional
     public TrackResponse addTrackWithFile(CreateTrackRequest request, MultipartFile file) {
@@ -93,7 +103,6 @@ public class TrackService {
         return mapToTrackResponse(savedTrack);
     }
 
-
     @Transactional
     public TrackResponse updateTrack(Long trackId, UpdateTrackRequest request) {
         validateInput(trackId, request);
@@ -107,8 +116,17 @@ public class TrackService {
         addPlaylistToTrack(track, request.getPlaylistId());
         addUserToTrack(track, request.getUserId());
 
-        Track savedTrack = trackRepository.save(track);
-        return mapToTrackResponse(savedTrack);
+        Track updatedTrack = trackRepository.save(track);
+
+        String cacheKey = buildTracksCacheKey(
+                track.getUsers().isEmpty() ? null : track.getUsers().iterator().next().getUsername(),
+                track.getAlbum() != null ? track.getAlbum().getTitle() : null,
+                track.getTitle(), track.getGenre(), null
+        );
+
+        cacheService.evict(cacheKey);
+
+        return mapToTrackResponse(updatedTrack);
     }
 
     private void validateInput(Long trackId, UpdateTrackRequest request) {
@@ -194,6 +212,17 @@ public class TrackService {
                 .collect(Collectors.toList()));
         response.setGenre(track.getGenre());
         return response;
+    }
+
+    private String buildTracksCacheKey(String user, String albumTitle, String title,
+                                       String genre, String playlistName) {
+        return String.format("albums_%s_%s_%s_%s_%s",
+                user != null ? user : "all",
+                albumTitle != null ? albumTitle : "all",
+                title != null ? title : "all",
+                genre != null ? genre : "all",
+                playlistName != null ? playlistName : "all"
+        );
     }
 
 }

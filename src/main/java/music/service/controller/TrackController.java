@@ -24,51 +24,14 @@ public class TrackController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TrackResponse>> getAllTracks() {
-        List<Track> tracks = trackService.getAllTracks();
-        List<TrackResponse> responses = tracks.stream()
-                .map(trackService::mapToTrackResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<TrackResponse> getTrackById(@PathVariable Long id) {
-        Optional<Track> trackOpt = trackService.getTrackById(id);
-        return trackOpt.map(track -> ResponseEntity.ok(trackService.mapToTrackResponse(track)))
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/genres")
-    public ResponseEntity<List<TrackResponse>> getTracksByGenre(@RequestParam String genre) {
-        List<Track> tracks = trackService.getByGenre(genre);
-        List<TrackResponse> responses = tracks.stream()
-                .map(trackService::mapToTrackResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/albums")
-    public ResponseEntity<List<TrackResponse>> getTracksByAlbum(@RequestParam String album) {
-        List<Track> tracks = trackService.getByAlbum(album);
-        List<TrackResponse> responses = tracks.stream()
-                .map(trackService::mapToTrackResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/playlists")
-    public ResponseEntity<List<TrackResponse>> getTracksByPlaylist(@RequestParam String playlist) {
-        List<Track> tracks = trackService.getByPlaylist(playlist);
-        List<TrackResponse> responses = tracks.stream()
-                .map(trackService::mapToTrackResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/users")
-    public ResponseEntity<List<TrackResponse>> getTracksByUser(@RequestParam String username) {
-        List<Track> tracks = trackService.getByUser(username);
+    public ResponseEntity<List<TrackResponse>> getAllTracks(
+            @RequestParam(required = false) String user,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String album,
+            @RequestParam(required = false) String genre,
+            @RequestParam(required = false) String playlist
+    ) {
+        List<Track> tracks = trackService.getAllTracks(user, album, title, genre, playlist);
         List<TrackResponse> responses = tracks.stream()
                 .map(trackService::mapToTrackResponse)
                 .collect(Collectors.toList());

@@ -3,7 +3,6 @@ package music.service.model;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.persistence.*;
-import javax.validation.constraints.Size;
 
 import lombok.Getter;
 import lombok.Setter;

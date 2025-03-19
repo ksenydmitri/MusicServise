@@ -3,14 +3,15 @@ package music.service.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import java.util.LinkedHashMap;
-import java.util.Map;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class CacheService {
 
     private static final Logger logger = LoggerFactory.getLogger(CacheService.class);
-    private static final int MAX_CACHE_SIZE = 100; // Максимальный размер кэша
+    private static final int MAX_CACHE_SIZE = 100;
 
     private final Map<String, Object> cache = new LinkedHashMap<String, Object>(MAX_CACHE_SIZE, 0.75f, true) {
         @Override
@@ -45,5 +46,18 @@ public class CacheService {
 
     public boolean containsKey(String key) {
         return cache.containsKey(key);
+    }
+
+    public void evictByPattern(String pattern) {
+        List<String> keysToRemove = cache.keySet().stream()
+                .filter(key -> key.startsWith(pattern.replace("*", "")))
+                .collect(Collectors.toList());
+
+        keysToRemove.forEach(this::evict);
+        logger.info("Evicted {} entries by pattern: {}", keysToRemove.size(), pattern);
+    }
+
+    public Set<String> getCachedKeys() {
+        return Collections.unmodifiableSet(cache.keySet());
     }
 }

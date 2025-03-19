@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import music.service.dto.*;
-import music.service.model.Album;
 import music.service.model.Playlist;
 import music.service.model.Track;
 import music.service.model.User;
@@ -21,17 +20,31 @@ public class PlaylistService {
     private final PlaylistRepository playlistRepository;
     private final TrackRepository trackRepository;
     private final UserRepository userRepository;
+    private final CacheService cacheService;
 
     @Autowired
     public PlaylistService(PlaylistRepository playlistRepository,
-                           TrackRepository trackRepository, UserRepository userRepository) {
+                           TrackRepository trackRepository, UserRepository userRepository, CacheService cacheService) {
         this.playlistRepository = playlistRepository;
         this.trackRepository = trackRepository;
         this.userRepository = userRepository;
+        this.cacheService = cacheService;
     }
 
     @Transactional
     public List<Playlist> getAllPlaylists(String user, String name) {
+        String cacheKey = buildPlaylistsCacheKey(user, name);
+
+        if (cacheService.containsKey(cacheKey)) {
+            return (List<Playlist>) cacheService.get(cacheKey);
+        }
+
+        List<Playlist> playlists = fetchPlaylistsFromDB(user, name);
+        cacheService.put(cacheKey, playlists);
+        return playlists;
+    }
+
+    private List<Playlist> fetchPlaylistsFromDB(String user, String name) {
         if (user != null && name != null) {
             return playlistRepository.findByUserUsernameAndNameNative(user, name);
         } else if (user != null) {
@@ -42,6 +55,14 @@ public class PlaylistService {
             return playlistRepository.findAll();
         }
     }
+
+    private String buildPlaylistsCacheKey(String user, String name) {
+        return String.format("playlists_%s_%s",
+                user != null ? user : "all",
+                name != null ? name : "all"
+        );
+    }
+
 
     public Optional<Playlist> getPlaylistById(Long id) {
         return playlistRepository.findById(id);
@@ -92,7 +113,13 @@ public class PlaylistService {
         addTrackToPlaylist(playlist, request.getTrackId());
 
         Playlist savedPlaylist = playlistRepository.save(playlist);
+        evictPlaylistCaches(playlistId);
         return mapToPlaylistResponse(savedPlaylist);
+    }
+
+    private void evictPlaylistCaches(Long playlistId) {
+        cacheService.evict("playlist_" + playlistId);
+        cacheService.evictByPattern("playlists_*");
     }
 
     private void updatePlaylistName(Playlist playlist, String name) {
