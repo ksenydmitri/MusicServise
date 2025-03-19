@@ -1,11 +1,10 @@
 package music.service.service;
 
+import java.util.*;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class CacheService {
@@ -51,7 +50,7 @@ public class CacheService {
     public void evictByPattern(String pattern) {
         List<String> keysToRemove = cache.keySet().stream()
                 .filter(key -> key.startsWith(pattern.replace("*", "")))
-                .collect(Collectors.toList());
+                .toList();
 
         keysToRemove.forEach(this::evict);
         logger.info("Evicted {} entries by pattern: {}", keysToRemove.size(), pattern);
