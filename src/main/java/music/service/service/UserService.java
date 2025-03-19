@@ -3,6 +3,8 @@ package music.service.service;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
+
+import music.service.dto.AlbumResponse;
 import music.service.dto.CreateUserRequest;
 import music.service.dto.UpdateUserRequest;
 import music.service.dto.UserResponse;
@@ -72,14 +74,24 @@ public class UserService {
         response.setUsername(user.getUsername());
         response.setEmail(user.getEmail());
         response.setRole(user.getRole());
-        response.setAlbums(user.getAlbums().stream()
-                .map(Album::getTitle)
-                .collect(Collectors.toList()));
-        response.setTracks(user.getTracks().stream()
-                .map(Track::getTitle)
-                .collect(Collectors.toList()));
+        List<AlbumResponse> albumResponses = user.getAlbums().stream().map(album -> {
+            AlbumResponse albumResponse = new AlbumResponse();
+            albumResponse.setId(album.getId());
+            albumResponse.setTitle(album.getTitle());
+            albumResponse.setTracks(album.getTracks().stream()
+                    .map(Track::getTitle)
+                    .toList());
+            albumResponse.setArtists(album.getUsers().stream()
+                    .map(User::getUsername)
+                    .toList());
+
+            return albumResponse;
+        }).toList();
+        response.setAlbums(albumResponses);
+
         return response;
     }
+
 
     public UserResponse findByUsernameOrEmail(String query) {
         User user = userRepository.findByUsernameOrEmail(query, query)

@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import music.service.dto.*;
+import music.service.model.Album;
 import music.service.model.Playlist;
 import music.service.model.Track;
 import music.service.model.User;
@@ -29,8 +30,17 @@ public class PlaylistService {
         this.userRepository = userRepository;
     }
 
-    public List<Playlist> getAllPlaylists() {
-        return playlistRepository.findAll();
+    @Transactional
+    public List<Playlist> getAllPlaylists(String user, String name) {
+        if (user != null && name != null) {
+            return playlistRepository.findByUserUsernameAndNameNative(user, name);
+        } else if (user != null) {
+            return playlistRepository.findByUserUsername(user);
+        } else if (name != null) {
+            return playlistRepository.findAllByName(name);
+        } else {
+            return playlistRepository.findAll();
+        }
     }
 
     public Optional<Playlist> getPlaylistById(Long id) {

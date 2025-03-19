@@ -27,6 +27,20 @@ public class AlbumService {
         return albumRepository.findAll();
     }
 
+    @Transactional
+    public List<Album> getAllAlbums(String user, String title) {
+        if (user != null && title != null) {
+            return albumRepository.findByUserUsernameAndTitleNative(user, title);
+        } else if (user != null) {
+            return albumRepository.findByUserUsername(user);
+        } else if (title != null) {
+            return albumRepository.findAllByTitle(title);
+        } else {
+            return albumRepository.findAll();
+        }
+    }
+
+    @Transactional
     public AlbumResponse mapToAlbumResponse(Album album) {
         AlbumResponse response = new AlbumResponse();
         response.setId(album.getId());
@@ -40,6 +54,7 @@ public class AlbumService {
         return response;
     }
 
+    @Transactional
     public Album getAlbumById(Long id) {
         return albumRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Album not found"));
@@ -60,7 +75,7 @@ public class AlbumService {
     }
 
     @Transactional
-    public AlbumResponse updateAlbum (Long albumId, UpdateAlbumRequest request) {
+    public AlbumResponse updateAlbum(Long albumId, UpdateAlbumRequest request) {
         Album album = albumRepository.findById(albumId)
                 .orElseThrow(() -> new RuntimeException("Album not found"));
 

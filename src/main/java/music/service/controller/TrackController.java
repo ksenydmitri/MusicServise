@@ -8,8 +8,10 @@ import music.service.dto.*;
 import music.service.model.Track;
 import music.service.service.TrackService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/tracks")
@@ -73,11 +75,17 @@ public class TrackController {
         return ResponseEntity.ok(responses);
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<TrackResponse> addTrack(
-            @Valid @RequestBody CreateTrackRequest request) {
-        TrackResponse response = trackService.addTrack(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            @RequestPart("trackData") @Valid CreateTrackRequest request,
+            @RequestPart("file") MultipartFile file) {
+        try {
+            TrackResponse response = trackService.addTrackWithFile(request, file);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null); // Или верните сообщение об ошибке
+        }
     }
 
     @PatchMapping("/{id}")

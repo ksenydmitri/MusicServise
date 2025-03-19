@@ -3,6 +3,8 @@ package music.service.model;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.persistence.*;
+import javax.validation.constraints.Size;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,9 +21,6 @@ public class Album {
 
     @Column(name = "title", nullable = false)
     private String title;
-
-    @Column(name = "genre")
-    private String genre;
 
     @OneToMany(mappedBy = "album",
             cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)

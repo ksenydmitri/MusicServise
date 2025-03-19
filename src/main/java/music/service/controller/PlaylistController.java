@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import music.service.dto.*;
+import music.service.model.Album;
 import music.service.model.Playlist;
 import music.service.service.PlaylistService;
 import org.springframework.http.HttpStatus;
@@ -21,8 +22,11 @@ public class PlaylistController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PlaylistResponse>> getAllPlaylists() {
-        List<Playlist> playlists = playlistService.getAllPlaylists();
+    public ResponseEntity<List<PlaylistResponse>> getAllPlaylists(
+            @RequestParam(required = false) String user,
+            @RequestParam(required = false) String name
+    ) {
+        List<Playlist> playlists = playlistService.getAllPlaylists(user, name);
         List<PlaylistResponse> responses = playlists.stream()
                 .map(playlistService::mapToPlaylistResponse)
                 .collect(Collectors.toList());

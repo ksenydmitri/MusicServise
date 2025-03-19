@@ -3,7 +3,6 @@ package music.service.controller;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
-
 import music.service.dto.*;
 import music.service.model.Album;
 import music.service.service.AlbumService;
@@ -22,8 +21,11 @@ public class AlbumController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AlbumResponse>> getAllAlbums() {
-        List<Album> albums = albumService.getAllAlbums();
+    public ResponseEntity<List<AlbumResponse>> getAllAlbums(
+            @RequestParam(required = false) String user,
+            @RequestParam(required = false) String title
+    ) {
+        List<Album> albums = albumService.getAllAlbums(user, title);
         List<AlbumResponse> responses = albums.stream()
                 .map(albumService::mapToAlbumResponse)
                 .collect(Collectors.toList());

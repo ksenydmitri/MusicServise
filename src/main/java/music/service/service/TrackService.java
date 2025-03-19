@@ -10,6 +10,7 @@ import music.service.model.*;
 import music.service.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class TrackService {
@@ -20,7 +21,7 @@ public class TrackService {
 
     @Autowired
     public TrackService(TrackRepository trackRepository, AlbumRepository albumRepository,
-                        UserRepository userRepository, PlaylistRepository playlistRepository) {
+                        UserRepository userRepository, PlaylistRepository playlistRepository){
         this.trackRepository = trackRepository;
         this.albumRepository = albumRepository;
         this.userRepository = userRepository;
@@ -51,7 +52,7 @@ public class TrackService {
         return trackRepository.findByUsersUsername(username);
     }
 
-    @Transactional
+    /*@Transactional
     public TrackResponse addTrack(CreateTrackRequest request) {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -64,11 +65,34 @@ public class TrackService {
             track.getUsers().add(user);
         }
         track.setAlbum(album);
+        track.setGenre(request.getGenre());
+        album.getTracks().add(track);
+        Track savedTrack = trackRepository.save(track);
+
+        return mapToTrackResponse(savedTrack);
+    }*/
+
+    @Transactional
+    public TrackResponse addTrackWithFile(CreateTrackRequest request, MultipartFile file) {
+
+        Album album = albumRepository.findById(request.getAlbumId())
+                .orElseThrow(() -> new RuntimeException("Album not found"));
+        Track track = new Track(request.getTitle(), request.getDuration());
+        track.setGenre(request.getGenre());
+        track.setAlbum(album);
+
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!track.getUsers().contains(user)) {
+            track.getUsers().add(user);
+        }
         album.getTracks().add(track);
         Track savedTrack = trackRepository.save(track);
 
         return mapToTrackResponse(savedTrack);
     }
+
 
     @Transactional
     public TrackResponse updateTrack(Long trackId, UpdateTrackRequest request) {
