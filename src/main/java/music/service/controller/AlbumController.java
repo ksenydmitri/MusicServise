@@ -1,11 +1,10 @@
 package music.service.controller;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.validation.Valid;
 import music.service.dto.*;
 import music.service.model.Album;
 import music.service.service.AlbumService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,14 +20,15 @@ public class AlbumController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AlbumResponse>> getAllAlbums(
+    public ResponseEntity<Page<AlbumResponse>> getAllAlbums(
             @RequestParam(required = false) String user,
-            @RequestParam(required = false) String title
+            @RequestParam(required = false) String title,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "title,asc") String sort
     ) {
-        List<Album> albums = albumService.getAllAlbums(user, title);
-        List<AlbumResponse> responses = albums.stream()
-                .map(albumService::mapToAlbumResponse)
-                .collect(Collectors.toList());
+        Page<Album> albums = albumService.getAllAlbums(user, title, page, size, sort);
+        Page<AlbumResponse> responses = albums.map(albumService::mapToAlbumResponse);
         return ResponseEntity.ok(responses);
     }
 

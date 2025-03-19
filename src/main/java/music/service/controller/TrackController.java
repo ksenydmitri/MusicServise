@@ -6,6 +6,9 @@ import javax.validation.Valid;
 import music.service.dto.*;
 import music.service.model.Track;
 import music.service.service.TrackService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,17 +26,17 @@ public class TrackController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TrackResponse>> getAllTracks(
+    public ResponseEntity<Page<TrackResponse>> getAllTracks(
             @RequestParam(required = false) String user,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String album,
             @RequestParam(required = false) String genre,
-            @RequestParam(required = false) String playlist
-    ) {
-        List<Track> tracks = trackService.getAllTracks(user, album, title, genre, playlist);
-        List<TrackResponse> responses = tracks.stream()
-                .map(trackService::mapToTrackResponse)
-                .collect(Collectors.toList());
+            @RequestParam(required = false) String playlist,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Track> tracks = trackService.getAllTracks(user, album, title, genre, playlist, pageable);
+        Page<TrackResponse> responses = tracks.map(trackService::mapToTrackResponse);
         return ResponseEntity.ok(responses);
     }
 
@@ -46,7 +49,7 @@ public class TrackController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null); // Или верните сообщение об ошибке
+                    .body(null); 
         }
     }
 

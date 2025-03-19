@@ -1,6 +1,5 @@
 package music.service.service;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
@@ -12,11 +11,14 @@ import music.service.repositories.PlaylistRepository;
 import music.service.repositories.TrackRepository;
 import music.service.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PlaylistService {
-
     private final PlaylistRepository playlistRepository;
     private final TrackRepository trackRepository;
     private final UserRepository userRepository;
@@ -32,37 +34,38 @@ public class PlaylistService {
     }
 
     @Transactional
-    public List<Playlist> getAllPlaylists(String user, String name) {
-        String cacheKey = buildPlaylistsCacheKey(user, name);
+    public Page<Playlist> getAllPlaylists(String user, String name, int page, int size, String sortBy) {
+        String cacheKey = buildPlaylistsCacheKey(user, name, page, size, sortBy);
 
         if (cacheService.containsKey(cacheKey)) {
-            return (List<Playlist>) cacheService.get(cacheKey);
+            return (Page<Playlist>) cacheService.get(cacheKey);
         }
 
-        List<Playlist> playlists = fetchPlaylistsFromDB(user, name);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        Page<Playlist> playlists = fetchPlaylistsFromDB(user, name, pageable);
         cacheService.put(cacheKey, playlists);
         return playlists;
     }
 
-    private List<Playlist> fetchPlaylistsFromDB(String user, String name) {
+    private Page<Playlist> fetchPlaylistsFromDB(String user, String name, Pageable pageable) {
         if (user != null && name != null) {
-            return playlistRepository.findByUserUsernameAndNameNative(user, name);
+            return playlistRepository.findByUserUsernameAndNameNative(user, name, pageable);
         } else if (user != null) {
-            return playlistRepository.findByUserUsername(user);
+            return playlistRepository.findByUserUsername(user, pageable);
         } else if (name != null) {
-            return playlistRepository.findAllByName(name);
+            return playlistRepository.findAllByName(name, pageable);
         } else {
-            return playlistRepository.findAll();
+            return playlistRepository.findAll(pageable);
         }
     }
 
-    private String buildPlaylistsCacheKey(String user, String name) {
-        return String.format("playlists_%s_%s",
+    private String buildPlaylistsCacheKey(String user, String name, int page, int size, String sortBy) {
+        return String.format("playlists_%s_%s_page%d_size%d_sort%s",
                 user != null ? user : "all",
-                name != null ? name : "all"
+                name != null ? name : "all",
+                page, size, sortBy
         );
     }
-
 
     public Optional<Playlist> getPlaylistById(Long id) {
         return playlistRepository.findById(id);
@@ -147,5 +150,4 @@ public class PlaylistService {
             }
         }
     }
-
 }

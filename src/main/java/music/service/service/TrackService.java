@@ -9,12 +9,17 @@ import music.service.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class TrackService {
+    private static final int DEFAULT_PAGE = 0;
+    private static final int DEFAULT_SIZE = 1;
+
     private static final Logger logger = LoggerFactory.getLogger(TrackService.class);
     private final TrackRepository trackRepository;
     private final AlbumRepository albumRepository;
@@ -34,37 +39,40 @@ public class TrackService {
     }
 
     @Transactional
-    public List<Track> getAllTracks(String username, String albumTitle, String title,
-                                    String genre, String playlistName) {
-        String cacheKey = buildTracksCacheKey(username, albumTitle, title, genre, playlistName);
+    public Page<Track> getAllTracks(String username, String albumTitle, String title,
+                                    String genre, String playlistName, Pageable pageable) {
+        String cacheKey = buildTracksCacheKey(username, albumTitle, title, genre, playlistName, pageable.getPageNumber(), pageable.getPageSize());
 
         if (cacheService.containsKey(cacheKey)) {
             logger.debug("Cache hit for key: {}", cacheKey);
-            return (List<Track>) cacheService.get(cacheKey);
+            return (Page<Track>) cacheService.get(cacheKey);
         }
 
-        List<Track> tracks = fetchTracksFromDatabase(
-                username, albumTitle, title, genre, playlistName);
+        Page<Track> tracks = fetchTracksFromDatabase(username, albumTitle, title, genre, playlistName, pageable);
         cacheService.put(cacheKey, tracks);
         return tracks;
     }
 
-    private List<Track> fetchTracksFromDatabase(String username, String albumTitle,
-                                                String title, String genre, String playlistName) {
+    private Page<Track> fetchTracksFromDatabase(String username, String albumTitle,
+                                                String title, String genre, String playlistName,
+                                                Pageable pageable) {
         Specification<Track> specification = Specification.where(null);
 
         if (username != null && !username.isEmpty()) {
-            specification = specification.and((root, query, criteriaBuilder) ->
+            specification = specification.and(
+                    (root, query, criteriaBuilder) ->
                     criteriaBuilder.equal(root.join("users").get("username"), username));
         }
 
         if (albumTitle != null && !albumTitle.isEmpty()) {
-            specification = specification.and((root, query, criteriaBuilder) ->
+            specification = specification.and(
+                    (root, query, criteriaBuilder) ->
                     criteriaBuilder.equal(root.join("album").get("title"), albumTitle));
         }
 
         if (title != null && !title.isEmpty()) {
-            specification = specification.and((root, query, criteriaBuilder) ->
+            specification = specification.and(
+                    (root, query, criteriaBuilder) ->
                     criteriaBuilder.equal(root.get("title"), title));
         }
 
@@ -73,26 +81,31 @@ public class TrackService {
                     criteriaBuilder.equal(root.get("genre"), genre));
         }
 
-        if (playlistName != null) {
+        if (playlistName != null && !playlistName.isEmpty()) {
             specification = specification.and((root, query, criteriaBuilder) ->
-                    criteriaBuilder.equal(root.join("playlists").get("id"), playlistName));
+                    criteriaBuilder.equal(root.join("playlists").get("name"), playlistName));
         }
 
-        return trackRepository.findAll(specification);
+        return trackRepository.findAll(specification, pageable);
     }
-
 
     @Transactional
     public TrackResponse addTrackWithFile(CreateTrackRequest request, MultipartFile file) {
+        if (request == null) {
+            throw new IllegalArgumentException("Request must not be null");
+        }
 
         Album album = albumRepository.findById(request.getAlbumId())
-                .orElseThrow(() -> new RuntimeException("Album not found"));
+                .orElseThrow(() -> new RuntimeException(
+                        "Album not found with ID: " + request.getAlbumId()));
+
         Track track = new Track(request.getTitle(), request.getDuration());
         track.setGenre(request.getGenre());
         track.setAlbum(album);
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(
+                        "User not found with ID: " + request.getUserId()));
 
         if (!track.getUsers().contains(user)) {
             track.getUsers().add(user);
@@ -100,6 +113,7 @@ public class TrackService {
         album.getTracks().add(track);
         Track savedTrack = trackRepository.save(track);
 
+        logger.info("Track added successfully with ID: {}", savedTrack.getId());
         return mapToTrackResponse(savedTrack);
     }
 
@@ -108,24 +122,36 @@ public class TrackService {
         validateInput(trackId, request);
 
         Track track = trackRepository.findById(trackId)
-                .orElseThrow(() -> new RuntimeException("Track not found"));
+                .orElseThrow(() -> new RuntimeException("Track not found with ID: " + trackId));
 
         updateTrackTitle(track, request.getTitle());
         updateTrackGenre(track, request.getGenre());
         updateTrackDuration(track, request.getDuration());
-        addPlaylistToTrack(track, request.getPlaylistId());
-        addUserToTrack(track, request.getUserId());
+
+        if (request.getPlaylistId() != null) {
+            addPlaylistToTrack(track, request.getPlaylistId());
+        }
+        if (request.getUserId() != null) {
+            addUserToTrack(track, request.getUserId());
+        }
 
         Track updatedTrack = trackRepository.save(track);
 
         String cacheKey = buildTracksCacheKey(
-                track.getUsers().isEmpty() ? null : track.getUsers().iterator().next().getUsername(),
-                track.getAlbum() != null ? track.getAlbum().getTitle() : null,
-                track.getTitle(), track.getGenre(), null
+                track.getUsers() != null && !track.getUsers().isEmpty()
+                        ? track.getUsers().iterator().next().getUsername()
+                        : null,
+                track.getAlbum() != null
+                        ? track.getAlbum().getTitle()
+                        : null,
+                track.getTitle(),
+                track.getGenre(),
+                null,
+                DEFAULT_PAGE, DEFAULT_SIZE
         );
 
         cacheService.evict(cacheKey);
-
+        logger.info("Track updated successfully with ID: {}", updatedTrack.getId());
         return mapToTrackResponse(updatedTrack);
     }
 
@@ -163,7 +189,8 @@ public class TrackService {
     private void addPlaylistToTrack(Track track, Long playlistId) {
         if (playlistId != null) {
             Playlist playlist = playlistRepository.findById(playlistId)
-                    .orElseThrow(() -> new RuntimeException("Playlist not found"));
+                    .orElseThrow(() -> new RuntimeException(
+                            "Playlist not found with ID: " + playlistId));
             if (!track.getPlaylists().contains(playlist)) {
                 track.getPlaylists().add(playlist);
             }
@@ -173,7 +200,8 @@ public class TrackService {
     private void addUserToTrack(Track track, Long userId) {
         if (userId != null) {
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new RuntimeException(
+                            "User not found with ID: " + userId));
             if (!track.getUsers().contains(user)) {
                 track.getUsers().add(user);
             }
@@ -183,19 +211,24 @@ public class TrackService {
     @Transactional
     public void deleteTrack(Long trackId) {
         Track track = trackRepository.findById(trackId)
-                .orElseThrow(() -> new RuntimeException("Track not found"));
+                .orElseThrow(() -> new RuntimeException(
+                        "Track not found with ID: " + trackId));
 
-        for (Playlist playlist : track.getPlaylists()) {
-            playlist.getTracks().remove(track);
+        if (track.getPlaylists() != null) {
+            for (Playlist playlist : track.getPlaylists()) {
+                playlist.getTracks().remove(track);
+            }
         }
 
-        for (User user : track.getUsers()) {
-            user.getTracks().remove(track);
+        if (track.getUsers() != null) {
+            for (User user : track.getUsers()) {
+                user.getTracks().remove(track);
+            }
         }
 
         trackRepository.delete(track);
+        logger.info("Track deleted successfully with ID: {}", trackId);
     }
-
 
     public TrackResponse mapToTrackResponse(Track track) {
         TrackResponse response = new TrackResponse();
@@ -203,27 +236,27 @@ public class TrackService {
         response.setTitle(track.getTitle());
         response.setDuration(track.getDuration());
         response.setAlbumTitle(track.getAlbum() != null ? track.getAlbum().getTitle() : null);
-        response.setUsernames(track.getUsers().stream()
-                .map(User::getUsername)
-                .collect(Collectors.toList()));
+        response.setUsernames(track.getUsers() != null
+                ? track.getUsers().stream().map(User::getUsername).collect(Collectors.toList())
+                : List.of());
         response.setReleaseDate(track.getReleaseDate());
-        response.setPlaylists(track.getPlaylists().stream()
-                .map(Playlist::getName)
-                .collect(Collectors.toList()));
+        response.setPlaylists(track.getPlaylists() != null
+                ? track.getPlaylists().stream().map(Playlist::getName).collect(Collectors.toList())
+                : List.of());
         response.setGenre(track.getGenre());
         return response;
     }
 
     private String buildTracksCacheKey(String user, String albumTitle, String title,
-                                       String genre, String playlistName) {
-        return String.format("albums_%s_%s_%s_%s_%s",
+                                       String genre, String playlistName, int page, int size) {
+        return String.format("albums_%s_%s_%s_%s_%s_%d_%d",
                 user != null ? user : "all",
                 albumTitle != null ? albumTitle : "all",
                 title != null ? title : "all",
                 genre != null ? genre : "all",
-                playlistName != null ? playlistName : "all"
+                playlistName != null ? playlistName : "all",
+                page,
+                size
         );
     }
-
 }
-

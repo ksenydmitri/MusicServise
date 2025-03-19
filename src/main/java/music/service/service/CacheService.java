@@ -11,7 +11,8 @@ public class CacheService {
     private static final Logger logger = LoggerFactory.getLogger(CacheService.class);
     private static final int MAX_CACHE_SIZE = 100;
 
-    private final Map<String, Object> cache = new LinkedHashMap<String, Object>(MAX_CACHE_SIZE, 0.75f, true) {
+    private final Map<String, Object> cache = new LinkedHashMap<String, Object>(
+            MAX_CACHE_SIZE, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, Object> eldest) {
             boolean shouldRemove = size() > MAX_CACHE_SIZE;

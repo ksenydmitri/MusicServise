@@ -12,6 +12,10 @@ import music.service.repositories.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,38 +34,37 @@ public class AlbumService {
     }
 
     @Transactional
-    public List<Album> getAllAlbums(String user, String title) {
-        String cacheKey = buildAlbumsCacheKey(user, title);
+    public Page<Album> getAllAlbums(String user, String title, int page, int size, String sortBy) {
+        String cacheKey = buildAlbumsCacheKey(user, title, page, size, sortBy);
 
         if (cacheService.containsKey(cacheKey)) {
             logger.info("Cache hit for key: {}", cacheKey);
-            return (List<Album>) cacheService.get(cacheKey);
+            return (Page<Album>) cacheService.get(cacheKey);
         }
 
-        List<Album> albums = fetchAlbumsFromDatabase(user, title);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        Page<Album> albums = fetchAlbumsFromDatabase(user, title, pageable);
         cacheService.put(cacheKey, albums);
         return albums;
     }
 
-    private List<Album> fetchAlbumsFromDatabase(String user, String title) {
-        List<Album> albums;
+    private Page<Album> fetchAlbumsFromDatabase(String user, String title, Pageable pageable) {
         if (user != null && title != null) {
-            albums = albumRepository.findByUserUsernameAndTitleNative(user, title);
+            return albumRepository.findByUserUsernameAndTitleNative(user, title, pageable);
         } else if (user != null) {
-            albums = albumRepository.findByUserUsername(user);
+            return albumRepository.findByUserUsername(user, pageable);
         } else if (title != null) {
-            albums = albumRepository.findAllByTitle(title);
+            return albumRepository.findAllByTitle(title, pageable);
         } else {
-            albums = albumRepository.findAll();
+            return albumRepository.findAll(pageable);
         }
-        return albums;
     }
 
-
-    private String buildAlbumsCacheKey(String user, String title) {
-        return String.format("albums_%s_%s",
+    private String buildAlbumsCacheKey(String user, String title, int page, int size, String sortBy) {
+        return String.format("albums_%s_%s_page%d_size%d_sort%s",
                 user != null ? user : "all",
-                title != null ? title : "all"
+                title != null ? title : "all",
+                page, size, sortBy
         );
     }
 
@@ -131,7 +134,6 @@ public class AlbumService {
         }
         Album savedAlbum = albumRepository.save(album);
 
-        // Очищаем кэш для конкретного альбома и всех альбомов
         clearCacheForAlbum(albumId);
         clearAllCache();
 
@@ -170,6 +172,4 @@ public class AlbumService {
         String cacheKey = "album_" + albumId;
         cacheService.evict(cacheKey);
     }
-
-
 }
