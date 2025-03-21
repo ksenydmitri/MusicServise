@@ -41,20 +41,26 @@ public class TrackService {
     @Transactional
     public Page<Track> getAllTracks(String username, String albumTitle, String title,
                                     String genre, String playlistName, Pageable pageable) {
-        String cacheKey = buildTracksCacheKey(username, albumTitle, title, genre, playlistName, pageable.getPageNumber(), pageable.getPageSize());
+        String cacheKey = buildTracksCacheKey(
+                username, albumTitle,
+                title, genre, playlistName,
+                pageable.getPageNumber(),
+                pageable.getPageSize());
 
         if (cacheService.containsKey(cacheKey)) {
             logger.debug("Cache hit for key: {}", cacheKey);
             return (Page<Track>) cacheService.get(cacheKey);
         }
 
-        Page<Track> tracks = fetchTracksFromDatabase(username, albumTitle, title, genre, playlistName, pageable);
+        Page<Track> tracks = fetchTracksFromDatabase(
+                username, albumTitle, title, genre, playlistName, pageable);
         cacheService.put(cacheKey, tracks);
         return tracks;
     }
 
     private Page<Track> fetchTracksFromDatabase(String username, String albumTitle,
-                                                String title, String genre, String playlistName,
+                                                String title, String genre,
+                                                String playlistName,
                                                 Pageable pageable) {
         Specification<Track> specification = Specification.where(null);
 
@@ -214,6 +220,8 @@ public class TrackService {
                 .orElseThrow(() -> new RuntimeException(
                         "Track not found with ID: " + trackId));
 
+        Album album = track.getAlbum();
+
         if (track.getPlaylists() != null) {
             for (Playlist playlist : track.getPlaylists()) {
                 playlist.getTracks().remove(track);
@@ -225,6 +233,18 @@ public class TrackService {
                 user.getTracks().remove(track);
             }
         }
+
+        String cacheKey = buildTracksCacheKey(
+                "all",
+                album != null ? album.getTitle() : "unknown",
+                track.getTitle(),
+                track.getGenre(),
+                "all",
+                0,
+                1
+        );
+
+        cacheService.evict(cacheKey);
 
         trackRepository.delete(track);
         logger.info("Track deleted successfully with ID: {}", trackId);

@@ -23,9 +23,9 @@ public class AlbumController {
     public ResponseEntity<Page<AlbumResponse>> getAllAlbums(
             @RequestParam(required = false) String user,
             @RequestParam(required = false) String title,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "title,asc") String sort
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = "title") String sort
     ) {
         Page<Album> albums = albumService.getAllAlbums(user, title, page, size, sort);
         Page<AlbumResponse> responses = albums.map(albumService::mapToAlbumResponse);

@@ -26,7 +26,9 @@ public class PlaylistService {
 
     @Autowired
     public PlaylistService(PlaylistRepository playlistRepository,
-                           TrackRepository trackRepository, UserRepository userRepository, CacheService cacheService) {
+                           TrackRepository trackRepository,
+                           UserRepository userRepository,
+                           CacheService cacheService) {
         this.playlistRepository = playlistRepository;
         this.trackRepository = trackRepository;
         this.userRepository = userRepository;
@@ -34,7 +36,8 @@ public class PlaylistService {
     }
 
     @Transactional
-    public Page<Playlist> getAllPlaylists(String user, String name, int page, int size, String sortBy) {
+    public Page<Playlist> getAllPlaylists(
+            String user, String name, int page, int size, String sortBy) {
         String cacheKey = buildPlaylistsCacheKey(user, name, page, size, sortBy);
 
         if (cacheService.containsKey(cacheKey)) {
@@ -47,9 +50,12 @@ public class PlaylistService {
         return playlists;
     }
 
-    private Page<Playlist> fetchPlaylistsFromDB(String user, String name, Pageable pageable) {
+    @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
+    private Page<Playlist> fetchPlaylistsFromDB(
+            String user, String name, Pageable pageable) {
         if (user != null && name != null) {
-            return playlistRepository.findByUserUsernameAndNameNative(user, name, pageable);
+            return playlistRepository.findByUserUsernameAndNameNative(
+                    user, name, pageable);
         } else if (user != null) {
             return playlistRepository.findByUserUsername(user, pageable);
         } else if (name != null) {
@@ -59,7 +65,8 @@ public class PlaylistService {
         }
     }
 
-    private String buildPlaylistsCacheKey(String user, String name, int page, int size, String sortBy) {
+    private String buildPlaylistsCacheKey(
+            String user, String name, int page, int size, String sortBy) {
         return String.format("playlists_%s_%s_page%d_size%d_sort%s",
                 user != null ? user : "all",
                 name != null ? name : "all",
@@ -72,6 +79,7 @@ public class PlaylistService {
     }
 
     public Playlist savePlaylist(CreatePlaylistRequest request) {
+        cacheService.clear();
         Playlist playlist = new Playlist();
         playlist.setName(request.getName());
         return playlistRepository.save(playlist);
@@ -91,6 +99,7 @@ public class PlaylistService {
         }
 
         playlistRepository.delete(playlist);
+        cacheService.clear();
     }
 
     public PlaylistResponse mapToPlaylistResponse(Playlist playlist) {

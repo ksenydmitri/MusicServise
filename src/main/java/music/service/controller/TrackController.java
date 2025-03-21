@@ -1,7 +1,5 @@
 package music.service.controller;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.validation.Valid;
 import music.service.dto.*;
 import music.service.model.Track;
@@ -25,6 +23,7 @@ public class TrackController {
         this.trackService = trackService;
     }
 
+
     @GetMapping
     public ResponseEntity<Page<TrackResponse>> getAllTracks(
             @RequestParam(required = false) String user,
@@ -32,10 +31,11 @@ public class TrackController {
             @RequestParam(required = false) String album,
             @RequestParam(required = false) String genre,
             @RequestParam(required = false) String playlist,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Track> tracks = trackService.getAllTracks(user, album, title, genre, playlist, pageable);
+        Page<Track> tracks = trackService.getAllTracks(
+                user, album, title, genre, playlist, pageable);
         Page<TrackResponse> responses = tracks.map(trackService::mapToTrackResponse);
         return ResponseEntity.ok(responses);
     }
@@ -49,7 +49,7 @@ public class TrackController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null); 
+                    .body(null);
         }
     }
 

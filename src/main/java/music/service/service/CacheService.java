@@ -39,8 +39,12 @@ public class CacheService {
     }
 
     public void evict(String key) {
-        logger.info("Evicting cache entry for key: {}", key);
-        cache.remove(key);
+        if (cache.containsKey(key)) {
+            logger.info("Evicting cache entry with key: {}", key);
+            cache.remove(key);
+        } else {
+            logger.warn("Cache entry with key {} not found", key);
+        }
     }
 
     public boolean containsKey(String key) {
@@ -59,4 +63,10 @@ public class CacheService {
     public Set<String> getCachedKeys() {
         return Collections.unmodifiableSet(cache.keySet());
     }
+
+    public void update(String key, Object value) {
+        logger.info("Updating cache entry with key: {}", key);
+        cache.put(key, value);
+    }
+
 }

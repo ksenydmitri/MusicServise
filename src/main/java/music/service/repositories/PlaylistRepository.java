@@ -10,23 +10,21 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
-    // Метод для поиска по названию с пагинацией
+
     Page<Playlist> findAllByName(String name, Pageable pageable);
 
-    // Метод для поиска по имени пользователя с пагинацией
     @Query("SELECT p FROM Playlist p JOIN p.users u WHERE u.username = :username")
     Page<Playlist> findByUserUsername(@Param("username") String username, Pageable pageable);
 
-    // Нативный запрос для поиска по имени пользователя и названию с пагинацией
     @Query(
-            value = "SELECT p.* FROM playlists p " +
-                    "JOIN public.users_playlists up ON p.id = up.playlist_id " +
-                    "JOIN users u ON up.user_id = u.id " +
-                    "WHERE u.username = :username AND p.name = :name",
-            countQuery = "SELECT COUNT(*) FROM playlists p " +
-                    "JOIN public.users_playlists up ON p.id = up.playlist_id " +
-                    "JOIN users u ON up.user_id = u.id " +
-                    "WHERE u.username = :username AND p.name = :name",
+            value = "SELECT p.* FROM playlists p "
+                    + "JOIN public.users_playlists up ON p.id = up.playlist_id "
+                    + "JOIN users u ON up.user_id = u.id "
+                    + "WHERE u.username = :username AND p.name = :name",
+            countQuery = "SELECT COUNT(*) FROM playlists p "
+                    + "JOIN public.users_playlists up ON p.id = up.playlist_id "
+                    + "JOIN users u ON up.user_id = u.id "
+                    + "WHERE u.username = :username AND p.name = :name",
             nativeQuery = true
     )
     Page<Playlist> findByUserUsernameAndNameNative(

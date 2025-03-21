@@ -10,23 +10,21 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AlbumRepository extends JpaRepository<Album, Long> {
-    // Метод для поиска по названию с пагинацией
+
     Page<Album> findAllByTitle(String title, Pageable pageable);
 
-    // Метод для поиска по имени пользователя с пагинацией
     @Query("SELECT a FROM Album a JOIN a.users u WHERE u.username = :username")
     Page<Album> findByUserUsername(@Param("username") String username, Pageable pageable);
 
-    // Нативный запрос для поиска по имени пользователя и названию с пагинацией
     @Query(
-            value = "SELECT a.* FROM albums a " +
-                    "JOIN public.users_albums au ON a.id = au.album_id " +
-                    "JOIN users u ON au.user_id = u.id " +
-                    "WHERE u.username = :username AND a.title = :title",
-            countQuery = "SELECT COUNT(*) FROM albums a " +
-                    "JOIN public.users_albums au ON a.id = au.album_id " +
-                    "JOIN users u ON au.user_id = u.id " +
-                    "WHERE u.username = :username AND a.title = :title",
+            value = "SELECT a.* FROM albums a "
+                    + "JOIN public.users_albums au ON a.id = au.album_id "
+                    + "JOIN users u ON au.user_id = u.id "
+                    + "WHERE u.username = :username AND a.title = :title",
+            countQuery = "SELECT COUNT(*) FROM albums a "
+                    + "JOIN public.users_albums au ON a.id = au.album_id "
+                    + "JOIN users u ON au.user_id = u.id "
+                    + "WHERE u.username = :username AND a.title = :title",
             nativeQuery = true
     )
     Page<Album> findByUserUsernameAndTitleNative(

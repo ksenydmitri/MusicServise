@@ -60,7 +60,8 @@ public class AlbumService {
         }
     }
 
-    private String buildAlbumsCacheKey(String user, String title, int page, int size, String sortBy) {
+    private String buildAlbumsCacheKey(
+            String user, String title, int page, int size, String sortBy) {
         return String.format("albums_%s_%s_page%d_size%d_sort%s",
                 user != null ? user : "all",
                 title != null ? title : "all",
@@ -135,7 +136,6 @@ public class AlbumService {
         Album savedAlbum = albumRepository.save(album);
 
         clearCacheForAlbum(albumId);
-        clearAllCache();
 
         return mapToAlbumResponse(savedAlbum);
     }
@@ -150,21 +150,6 @@ public class AlbumService {
         albumRepository.deleteById(albumId);
 
         clearCacheForAlbum(albumId);
-        clearAllCache();
-    }
-
-    /**
-     * Очистить кэш для конкретного ключа.
-     */
-    public void clearCache(String username, String title) {
-        String cacheKey = "albums_" + username + "_" + title;
-        cacheService.evict(cacheKey);
-    }
-
-    /**
-     * Очистить весь кэш.
-     */
-    public void clearAllCache() {
         cacheService.clear();
     }
 

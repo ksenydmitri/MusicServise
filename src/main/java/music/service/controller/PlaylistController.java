@@ -24,9 +24,9 @@ public class PlaylistController {
     public ResponseEntity<Page<PlaylistResponse>> getAllPlaylists(
             @RequestParam(required = false) String user,
             @RequestParam(required = false) String name,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "name,asc") String sort
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = "name") String sort
     ) {
         Page<Playlist> playlists = playlistService.getAllPlaylists(user, name, page, size, sort);
         Page<PlaylistResponse> responses = playlists.map(playlistService::mapToPlaylistResponse);
