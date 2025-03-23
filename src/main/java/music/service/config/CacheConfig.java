@@ -1,4 +1,4 @@
-package music.service.service;
+package music.service.config;
 
 import java.util.*;
 import org.slf4j.Logger;
@@ -6,9 +6,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CacheService {
+public class CacheConfig {
 
-    private static final Logger logger = LoggerFactory.getLogger(CacheService.class);
+    private static final Logger logger = LoggerFactory.getLogger(CacheConfig.class);
     private static final int MAX_CACHE_SIZE = 100;
 
     private final Map<String, Object> cache = new LinkedHashMap<String, Object>(

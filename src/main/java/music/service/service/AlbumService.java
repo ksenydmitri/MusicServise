@@ -1,8 +1,8 @@
 package music.service.service;
 
-import java.util.List;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
+import music.service.config.CacheConfig;
 import music.service.dto.*;
 import music.service.model.Album;
 import music.service.model.Track;
@@ -23,11 +23,11 @@ public class AlbumService {
     private static final Logger logger = LoggerFactory.getLogger(AlbumService.class);
     private final AlbumRepository albumRepository;
     private final UserRepository userRepository;
-    private final CacheService cacheService;
+    private final CacheConfig cacheService;
 
     @Autowired
     public AlbumService(AlbumRepository albumRepository,
-                        UserRepository userRepository, CacheService cacheService) {
+                        UserRepository userRepository, CacheConfig cacheService) {
         this.albumRepository = albumRepository;
         this.userRepository = userRepository;
         this.cacheService = cacheService;
@@ -136,6 +136,7 @@ public class AlbumService {
         Album savedAlbum = albumRepository.save(album);
 
         clearCacheForAlbum(albumId);
+        evictAllAlbumCaches();
 
         return mapToAlbumResponse(savedAlbum);
     }
@@ -150,11 +151,12 @@ public class AlbumService {
         albumRepository.deleteById(albumId);
 
         clearCacheForAlbum(albumId);
-        cacheService.clear();
+        evictAllAlbumCaches();
     }
 
     public void clearCacheForAlbum(Long albumId) {
         String cacheKey = "album_" + albumId;
         cacheService.evict(cacheKey);
     }
+
 }

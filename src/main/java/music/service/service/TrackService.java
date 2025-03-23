@@ -3,7 +3,9 @@ package music.service.service;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
+import music.service.config.CacheConfig;
 import music.service.dto.*;
+import music.service.exception.ValidationException;
 import music.service.model.*;
 import music.service.repositories.*;
 import org.slf4j.Logger;
@@ -13,7 +15,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class TrackService {
@@ -25,12 +26,12 @@ public class TrackService {
     private final AlbumRepository albumRepository;
     private final UserRepository userRepository;
     private final PlaylistRepository playlistRepository;
-    private final CacheService cacheService;
+    private final CacheConfig cacheService;
 
     @Autowired
     public TrackService(TrackRepository trackRepository, AlbumRepository albumRepository,
                         UserRepository userRepository, PlaylistRepository playlistRepository,
-                        CacheService cacheService) {
+                        CacheConfig cacheService) {
         this.trackRepository = trackRepository;
         this.albumRepository = albumRepository;
         this.userRepository = userRepository;
@@ -96,9 +97,9 @@ public class TrackService {
     }
 
     @Transactional
-    public TrackResponse addTrackWithFile(CreateTrackRequest request, MultipartFile file) {
+    public TrackResponse addTrack(CreateTrackRequest request) throws ValidationException {
         if (request == null) {
-            throw new IllegalArgumentException("Request must not be null");
+            throw new ValidationException("Request must not be null");
         }
 
         Album album = albumRepository.findById(request.getAlbumId())
@@ -155,7 +156,6 @@ public class TrackService {
                 null,
                 DEFAULT_PAGE, DEFAULT_SIZE
         );
-
         cacheService.evict(cacheKey);
         logger.info("Track updated successfully with ID: {}", updatedTrack.getId());
         return mapToTrackResponse(updatedTrack);
@@ -234,17 +234,7 @@ public class TrackService {
             }
         }
 
-        String cacheKey = buildTracksCacheKey(
-                "all",
-                album != null ? album.getTitle() : "unknown",
-                track.getTitle(),
-                track.getGenre(),
-                "all",
-                0,
-                1
-        );
-
-        cacheService.evict(cacheKey);
+        evictAllTrackCaches();
 
         trackRepository.delete(track);
         logger.info("Track deleted successfully with ID: {}", trackId);
@@ -278,5 +268,10 @@ public class TrackService {
                 page,
                 size
         );
+    }
+
+    private void evictAllTrackCaches() {
+        cacheService.evictByPattern("tracks_*");
+        cacheService.evictByPattern("track_*");
     }
 }

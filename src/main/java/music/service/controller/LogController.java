@@ -1,42 +1,53 @@
 package music.service.controller;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import music.service.service.LogService;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.File;
+import java.io.IOException;
+
 @RestController
-@RequestMapping("/logs")
 public class LogController {
 
-    @GetMapping("/download")
-    public ResponseEntity<Resource> downloadLogFile(@RequestParam String date) {
+    private final LogService logService;
+
+    public LogController(LogService logService) {
+        this.logService = logService;
+    }
+
+    /**
+     * Скачивает файл логов за указанную дату и индекс.
+     *
+     * @param date       Дата в формате yyyy-MM-dd.
+     * @param index      Индекс файла (например, 0, 1, 2).
+     * @param uncompress Если true, возвращает распакованный файл.
+     * @return ResponseEntity с файлом логов.
+     */
+    @GetMapping("/logs")
+    public ResponseEntity<Resource> downloadLogFile(
+            @RequestParam String date,
+            @RequestParam(defaultValue = "0") int index,
+            @RequestParam(defaultValue = "false") boolean uncompress) throws IOException {
         try {
-            LocalDate logDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
-            String logFileName = "application-" + logDate + ".log";
-            Path logFilePath = Paths.get(logFileName);
+            Resource resource = logService.getLogFileByDate(date, index, uncompress);
 
-            if (!logFilePath.toFile().exists()) {
-                return ResponseEntity.notFound().build();
-            }
+            // Определяем MIME-тип и имя файла
+            String contentType = uncompress ? MediaType.TEXT_PLAIN_VALUE : "application/gzip";
+            String filename = resource.getFilename();
 
-            Resource resource = new UrlResource(logFilePath.toUri());
+            // Возвращаем файл
             return ResponseEntity.ok()
-                    .contentType(MediaType.TEXT_PLAIN)
-                    .header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                     .body(resource);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+        } catch (IOException e) {
+            return ResponseEntity.notFound().build(); // 404, если файл не найден
         }
     }
 }

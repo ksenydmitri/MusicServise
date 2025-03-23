@@ -3,6 +3,8 @@ package music.service.service;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
+
+import music.service.config.CacheConfig;
 import music.service.dto.*;
 import music.service.model.Playlist;
 import music.service.model.Track;
@@ -22,13 +24,13 @@ public class PlaylistService {
     private final PlaylistRepository playlistRepository;
     private final TrackRepository trackRepository;
     private final UserRepository userRepository;
-    private final CacheService cacheService;
+    private final CacheConfig cacheService;
 
     @Autowired
     public PlaylistService(PlaylistRepository playlistRepository,
                            TrackRepository trackRepository,
                            UserRepository userRepository,
-                           CacheService cacheService) {
+                           CacheConfig cacheService) {
         this.playlistRepository = playlistRepository;
         this.trackRepository = trackRepository;
         this.userRepository = userRepository;
@@ -82,6 +84,7 @@ public class PlaylistService {
         cacheService.clear();
         Playlist playlist = new Playlist();
         playlist.setName(request.getName());
+        evictAllPlaylistCaches();
         return playlistRepository.save(playlist);
     }
 
@@ -99,7 +102,7 @@ public class PlaylistService {
         }
 
         playlistRepository.delete(playlist);
-        cacheService.clear();
+        evictAllPlaylistCaches();
     }
 
     public PlaylistResponse mapToPlaylistResponse(Playlist playlist) {
@@ -125,13 +128,8 @@ public class PlaylistService {
         addTrackToPlaylist(playlist, request.getTrackId());
 
         Playlist savedPlaylist = playlistRepository.save(playlist);
-        evictPlaylistCaches(playlistId);
+        evictAllPlaylistCaches();
         return mapToPlaylistResponse(savedPlaylist);
-    }
-
-    private void evictPlaylistCaches(Long playlistId) {
-        cacheService.evict("playlist_" + playlistId);
-        cacheService.evictByPattern("playlists_*");
     }
 
     private void updatePlaylistName(Playlist playlist, String name) {
@@ -158,5 +156,10 @@ public class PlaylistService {
                 playlist.getTracks().add(track);
             }
         }
+    }
+
+    private void evictAllPlaylistCaches() {
+        cacheService.evictByPattern("playlist_*");
+        cacheService.evictByPattern("playlists_*");
     }
 }
