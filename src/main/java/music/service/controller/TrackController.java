@@ -2,6 +2,7 @@ package music.service.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -18,10 +19,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/tracks")
-@Tag(name = "Track Controller", description = "API для работы с треками") // Описание контроллера
+@Tag(name = "Track Controller", description = "API для работы с треками")
 public class TrackController {
 
     private final TrackService trackService;
@@ -33,10 +36,9 @@ public class TrackController {
     @GetMapping
     @Operation(
             summary = "Получить список треков",
-            description = "Возвращает список треков с возможностью фильтрации по пользователю,"
-                    + " названию, альбому, жанру и плейлисту.",
+            description = "Возвращает список треков с возможностью фильтрации",
             responses = {
-                @ApiResponse(
+                    @ApiResponse(
                             responseCode = "200",
                             description = "Список треков успешно получен",
                             content = @Content(schema = @Schema(implementation = Page.class))
@@ -44,29 +46,22 @@ public class TrackController {
             }
     )
     public ResponseEntity<Page<TrackResponse>> getAllTracks(
-            @Parameter(description = "Фильтр по пользователю", example = "user123")
+            @Parameter(description = "Фильтр по пользователю")
             @RequestParam(required = false) String user,
-
-            @Parameter(description = "Фильтр по названию трека", example = "My Song")
+            @Parameter(description = "Фильтр по названию трека")
             @RequestParam(required = false) String title,
-
-            @Parameter(description = "Фильтр по альбому", example = "My Album")
+            @Parameter(description = "Фильтр по альбому")
             @RequestParam(required = false) String album,
-
-            @Parameter(description = "Фильтр по жанру", example = "Rock")
+            @Parameter(description = "Фильтр по жанру")
             @RequestParam(required = false) String genre,
-
-            @Parameter(description = "Фильтр по плейлисту", example = "My Playlist")
+            @Parameter(description = "Фильтр по плейлисту")
             @RequestParam(required = false) String playlist,
-
-            @Parameter(description = "Номер страницы", example = "0")
-            @RequestParam(required = false, defaultValue = "0") int page,
-
-            @Parameter(description = "Размер страницы", example = "10")
-            @RequestParam(required = false, defaultValue = "10") int size) {
+            @Parameter(description = "Номер страницы")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Размер страницы")
+            @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Track> tracks = trackService.getAllTracks(
-                user, album, title, genre, playlist, pageable);
+        Page<Track> tracks = trackService.getAllTracks(user, album, title, genre, playlist, pageable);
         Page<TrackResponse> responses = tracks.map(trackService::mapToTrackResponse);
         return ResponseEntity.ok(responses);
     }
@@ -74,23 +69,20 @@ public class TrackController {
     @PostMapping
     @Operation(
             summary = "Добавить новый трек",
-            description = "Создает новый трек на основе переданных данных.",
+            description = "Создает новый трек",
             responses = {
-                @ApiResponse(
+                    @ApiResponse(
                             responseCode = "201",
                             description = "Трек успешно создан",
-                            content = @Content(schema = @Schema(
-                                    implementation = TrackResponse.class))
+                            content = @Content(schema = @Schema(implementation = TrackResponse.class))
                     ),
-                @ApiResponse(
+                    @ApiResponse(
                             responseCode = "400",
-                            description = "Некорректные данные",
-                            content = @Content
+                            description = "Некорректные данные"
                     )
             }
     )
     public ResponseEntity<TrackResponse> addTrack(
-            @Parameter(description = "Данные для создания трека", required = true)
             @RequestBody @Valid CreateTrackRequest request) {
         try {
             TrackResponse response = trackService.addTrack(request);
@@ -100,29 +92,52 @@ public class TrackController {
         }
     }
 
+    @PostMapping("/bulk")
+    @Operation(
+            summary = "Добавить несколько треков",
+            description = "Создает несколько треков за одну операцию",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Треки успешно созданы",
+                            content = @Content(array
+                                    = @ArraySchema(schema =
+                            @Schema(implementation = TrackResponse.class)))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Некорректные данные"
+                    )
+            }
+    )
+    public ResponseEntity<List<TrackResponse>> addTracksBulk(
+            @RequestBody @Valid List<@Valid CreateTrackRequest> requests) {
+        try {
+            List<TrackResponse> responses = trackService.addTracksBulk(requests);
+            return ResponseEntity.status(HttpStatus.CREATED).body(responses);
+        } catch (ValidationException e) {
+            throw new ValidationException(e.getMessage());
+        }
+    }
+
     @PatchMapping("/{id}")
     @Operation(
             summary = "Обновить трек",
-            description = "Обновляет данные трека по его идентификатору.",
+            description = "Обновляет данные трека",
             responses = {
-                @ApiResponse(
+                    @ApiResponse(
                             responseCode = "200",
                             description = "Трек успешно обновлен",
-                            content = @Content(
-                                    schema = @Schema(implementation = TrackResponse.class))
+                            content = @Content(schema = @Schema(implementation = TrackResponse.class))
                     ),
-                @ApiResponse(
+                    @ApiResponse(
                             responseCode = "404",
-                            description = "Трек не найден",
-                            content = @Content
+                            description = "Трек не найден"
                     )
             }
     )
     public ResponseEntity<TrackResponse> patchTrack(
-            @Parameter(description = "Идентификатор трека", example = "1", required = true)
             @PathVariable Long id,
-
-            @Parameter(description = "Данные для обновления трека", required = true)
             @RequestBody UpdateTrackRequest request) {
         TrackResponse updatedTrack = trackService.updateTrack(id, request);
         return ResponseEntity.ok(updatedTrack);
@@ -131,23 +146,19 @@ public class TrackController {
     @DeleteMapping("/{id}")
     @Operation(
             summary = "Удалить трек",
-            description = "Удаляет трек по его идентификатору.",
+            description = "Удаляет трек по идентификатору",
             responses = {
-                @ApiResponse(
+                    @ApiResponse(
                             responseCode = "204",
-                            description = "Трек успешно удален",
-                            content = @Content
+                            description = "Трек успешно удален"
                     ),
-                @ApiResponse(
+                    @ApiResponse(
                             responseCode = "404",
-                            description = "Трек не найден",
-                            content = @Content
+                            description = "Трек не найден"
                     )
             }
     )
-    public ResponseEntity<Void> deleteTrack(
-            @Parameter(description = "Идентификатор трека", example = "1", required = true)
-            @PathVariable Long id) {
+    public ResponseEntity<Void> deleteTrack(@PathVariable Long id) {
         trackService.deleteTrack(id);
         return ResponseEntity.noContent().build();
     }

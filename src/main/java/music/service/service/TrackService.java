@@ -1,6 +1,9 @@
 package music.service.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import music.service.config.CacheConfig;
@@ -275,5 +278,126 @@ public class TrackService {
     private void evictAllTrackCaches() {
         cacheService.evictByPattern("tracks_*");
         cacheService.evictByPattern("track_*");
+    }
+
+    @Transactional
+    public List<TrackResponse> addTracksBulk(List<CreateTrackRequest> requests) {
+        validateBulkRequest(requests);
+
+        Map<Long, Album> albums = fetchRequiredAlbums(requests);
+        Map<Long, User> users = fetchRequiredUsers(requests);
+
+        List<Track> tracks = createTracksFromRequests(requests, albums, users);
+        List<Track> savedTracks = saveAllTracks(tracks);
+
+        clearCacheAfterBulkOperation();
+        logBulkOperation(savedTracks.size());
+
+        return mapToTrackResponses(savedTracks);
+    }
+
+    private void validateBulkRequest(List<CreateTrackRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            throw new ValidationException("Request list must not be null or empty");
+        }
+
+        requests.forEach(this::validateSingleRequest);
+    }
+
+    private void validateSingleRequest(CreateTrackRequest request) {
+        if (request == null) {
+            throw new ValidationException("Request in list must not be null");
+        }
+        if (request.getTitle() == null || request.getTitle().isEmpty()) {
+            throw new ValidationException("Track title must not be empty");
+        }
+        if (request.getDuration() <= 0) {
+            throw new ValidationException("Track duration must be positive");
+        }
+    }
+
+    private Map<Long, Album> fetchRequiredAlbums(List<CreateTrackRequest> requests) {
+        Set<Long> albumIds = extractAlbumIds(requests);
+        List<Album> foundAlbums = albumRepository.findAllById(albumIds);
+
+        return foundAlbums.stream()
+                .collect(Collectors.toMap(Album::getId, Function.identity()));
+    }
+
+    private Set<Long> extractAlbumIds(List<CreateTrackRequest> requests) {
+        return requests.stream()
+                .map(CreateTrackRequest::getAlbumId)
+                .collect(Collectors.toSet());
+    }
+
+    private Map<Long, User> fetchRequiredUsers(List<CreateTrackRequest> requests) {
+        Set<Long> userIds = extractUserIds(requests);
+        List<User> foundUsers = userRepository.findAllById(userIds);
+
+        return foundUsers.stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+    }
+
+    private Set<Long> extractUserIds(List<CreateTrackRequest> requests) {
+        return requests.stream()
+                .map(CreateTrackRequest::getUserId)
+                .collect(Collectors.toSet());
+    }
+
+    private List<Track> createTracksFromRequests(List<CreateTrackRequest> requests,
+                                                 Map<Long, Album> albums,
+                                                 Map<Long, User> users) {
+        return requests.stream()
+                .map(request -> createSingleTrack(request, albums, users))
+                .collect(Collectors.toList());
+    }
+
+    private Track createSingleTrack(CreateTrackRequest request,
+                                    Map<Long, Album> albums,
+                                    Map<Long, User> users) {
+        Album album = getAlbumOrThrow(request.getAlbumId(), albums);
+        User user = getUserOrThrow(request.getUserId(), users);
+
+        Track track = new Track(request.getTitle(), request.getDuration());
+        track.setGenre(request.getGenre());
+        track.setAlbum(album);
+        track.getUsers().add(user);
+        album.getTracks().add(track);
+
+        return track;
+    }
+
+    private Album getAlbumOrThrow(Long albumId, Map<Long, Album> albums) {
+        Album album = albums.get(albumId);
+        if (album == null) {
+            throw new ResourceNotFoundException("Album not found with ID: " + albumId);
+        }
+        return album;
+    }
+
+    private User getUserOrThrow(Long userId, Map<Long, User> users) {
+        User user = users.get(userId);
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found with ID: " + userId);
+        }
+        return user;
+    }
+
+    private List<Track> saveAllTracks(List<Track> tracks) {
+        return trackRepository.saveAll(tracks);
+    }
+
+    private void clearCacheAfterBulkOperation() {
+        cacheService.clear();
+    }
+
+    private void logBulkOperation(int tracksCount) {
+        logger.info("Added {} tracks in bulk operation", tracksCount);
+    }
+
+    private List<TrackResponse> mapToTrackResponses(List<Track> tracks) {
+        return tracks.stream()
+                .map(this::mapToTrackResponse)
+                .collect(Collectors.toList());
     }
 }
