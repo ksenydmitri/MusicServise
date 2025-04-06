@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import music.service.config.CacheConfig;
 import music.service.dto.*;
+import music.service.exception.ResourceNotFoundException;
 import music.service.exception.ValidationException;
 import music.service.model.*;
 import music.service.repositories.*;
@@ -119,6 +120,7 @@ public class TrackService {
         }
         album.getTracks().add(track);
         Track savedTrack = trackRepository.save(track);
+        cacheService.clear();
 
         logger.info("Track added successfully with ID: {}", savedTrack.getId());
         return mapToTrackResponse(savedTrack);
@@ -129,7 +131,7 @@ public class TrackService {
         validateInput(trackId, request);
 
         Track track = trackRepository.findById(trackId)
-                .orElseThrow(() -> new RuntimeException("Track not found with ID: " + trackId));
+                .orElseThrow(() -> new ResourceNotFoundException("Track not found with ID: " + trackId));
 
         updateTrackTitle(track, request.getTitle());
         updateTrackGenre(track, request.getGenre());

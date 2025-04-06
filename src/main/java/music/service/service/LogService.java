@@ -1,9 +1,5 @@
 package music.service.service;
 
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.stereotype.Service;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -13,6 +9,9 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.zip.GZIPInputStream;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.stereotype.Service;
 
 @Service
 public class LogService {
@@ -26,7 +25,8 @@ public class LogService {
      * @return Resource для файла логов.
      * @throws IOException Если произошла ошибка при работе с файлом.
      */
-    public Resource getLogFileByDate(String date, int index, boolean uncompress) throws IOException {
+    public Resource getLogFileByDate(String date, int index, boolean uncompress)
+            throws IOException {
         LocalDate logDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
         String logFileName = String.format("application.log.%s.%d.gz", logDate, index);
         Path path = Paths.get(LOG_DIRECTORY + logFileName);
@@ -37,7 +37,8 @@ public class LogService {
         }
 
         if (uncompress) {
-            String uncompressedFileName = String.format("application.log.%s.%d.log", logDate, index);
+            String uncompressedFileName = String.format(
+                    "application.log.%s.%d.log", logDate, index);
             File uncompressedFile = new File(LOG_DIRECTORY + uncompressedFileName);
             uncompressGzipFile(file, uncompressedFile);
             return new UrlResource(uncompressedFile.toURI());

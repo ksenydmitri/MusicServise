@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CreateAlbumRequest {
-    @NotBlank(message = "Title is required")
+    @NotBlank(message = "Name is required")
     private String name;
 
     @NotNull(message = "User ID is required")

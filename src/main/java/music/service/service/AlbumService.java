@@ -4,6 +4,7 @@ import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import music.service.config.CacheConfig;
 import music.service.dto.*;
+import music.service.exception.ResourceNotFoundException;
 import music.service.model.Album;
 import music.service.model.Track;
 import music.service.model.User;
@@ -83,6 +84,7 @@ public class AlbumService {
         return response;
     }
 
+
     @Transactional
     public Album getAlbumById(Long id) {
         String cacheKey = "album_" + id;
@@ -92,15 +94,17 @@ public class AlbumService {
         }
 
         Album album = albumRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Album not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Album not found"));
+
         cacheService.put(cacheKey, album);
         return album;
     }
 
+
     @Transactional
     public AlbumResponse addAlbum(CreateAlbumRequest request) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Album album = new Album(request.getName());
         if (!album.getUsers().contains(user)) {
@@ -121,14 +125,14 @@ public class AlbumService {
     @Transactional
     public AlbumResponse updateAlbum(Long albumId, UpdateAlbumRequest request) {
         Album album = albumRepository.findById(albumId)
-                .orElseThrow(() -> new RuntimeException("Album not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Album not found"));
 
         if (request.getName() != null) {
             album.setTitle(request.getName());
         }
         if (request.getUserId() != null) {
             User user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             if (!album.getUsers().contains(user)) {
                 album.getUsers().add(user);
             }
@@ -151,7 +155,6 @@ public class AlbumService {
         albumRepository.deleteById(albumId);
 
         clearCacheForAlbum(albumId);
-        evictAllAlbumCaches();
     }
 
     public void clearCacheForAlbum(Long albumId) {

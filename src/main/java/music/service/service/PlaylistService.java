@@ -3,9 +3,9 @@ package music.service.service;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
-
 import music.service.config.CacheConfig;
 import music.service.dto.*;
+import music.service.exception.ResourceNotFoundException;
 import music.service.model.Playlist;
 import music.service.model.Track;
 import music.service.model.User;
@@ -91,7 +91,7 @@ public class PlaylistService {
     @Transactional
     public void deletePlaylist(Long id) {
         Playlist playlist = playlistRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Playlist not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Playlist not found"));
 
         for (Track track : playlist.getTracks()) {
             playlist.getTracks().remove(track);
@@ -121,7 +121,7 @@ public class PlaylistService {
     @Transactional
     public PlaylistResponse updatePlaylist(Long playlistId, UpdatePlaylistRequest request) {
         Playlist playlist = playlistRepository.findById(playlistId)
-                .orElseThrow(() -> new RuntimeException("Playlist not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Playlist not found"));
 
         updatePlaylistName(playlist, request.getName());
         addUserToPlaylist(playlist, request.getUserId());
@@ -141,7 +141,7 @@ public class PlaylistService {
     private void addUserToPlaylist(Playlist playlist, Long userId) {
         if (userId != null) {
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             if (!playlist.getUsers().contains(user)) {
                 playlist.getUsers().add(user);
             }
@@ -151,7 +151,7 @@ public class PlaylistService {
     private void addTrackToPlaylist(Playlist playlist, Long trackId) {
         if (trackId != null) {
             Track track = trackRepository.findById(trackId)
-                    .orElseThrow(() -> new RuntimeException("Track not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Track not found"));
             if (!playlist.getTracks().contains(track)) {
                 playlist.getTracks().add(track);
             }
