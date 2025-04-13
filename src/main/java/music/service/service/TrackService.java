@@ -30,12 +30,12 @@ public class TrackService {
     private final AlbumRepository albumRepository;
     private final UserRepository userRepository;
     private final PlaylistRepository playlistRepository;
-    private final CacheConfig cacheService;
+    private final CacheService cacheService;
 
     @Autowired
     public TrackService(TrackRepository trackRepository, AlbumRepository albumRepository,
                         UserRepository userRepository, PlaylistRepository playlistRepository,
-                        CacheConfig cacheService) {
+                        CacheService cacheService) {
         this.trackRepository = trackRepository;
         this.albumRepository = albumRepository;
         this.userRepository = userRepository;
@@ -105,9 +105,15 @@ public class TrackService {
         if (request == null) {
             throw new ValidationException("Request must not be null");
         }
+        if (request.getTitle() == null || request.getTitle().isEmpty()) {
+            throw new ValidationException("Track title must not be empty");
+        }
+        if (request.getDuration() <= 0) {
+            throw new ValidationException("Track duration must be positive");
+        }
 
         Album album = albumRepository.findById(request.getAlbumId())
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Album not found with ID: " + request.getAlbumId()));
 
         Track track = new Track(request.getTitle(), request.getDuration());
@@ -115,7 +121,7 @@ public class TrackService {
         track.setAlbum(album);
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with ID: " + request.getUserId()));
 
         if (!track.getUsers().contains(user)) {
@@ -166,7 +172,7 @@ public class TrackService {
         return mapToTrackResponse(updatedTrack);
     }
 
-    private void validateInput(Long trackId, UpdateTrackRequest request) {
+    void validateInput(Long trackId, UpdateTrackRequest request) {
         if (trackId == null) {
             throw new IllegalArgumentException("Track ID must not be null");
         }
@@ -175,7 +181,7 @@ public class TrackService {
         }
     }
 
-    private void updateTrackTitle(Track track, String title) {
+    void updateTrackTitle(Track track, String title) {
         if (title != null && !title.isEmpty()) {
             track.setTitle(title);
         } else if (title != null) {
@@ -183,7 +189,7 @@ public class TrackService {
         }
     }
 
-    private void updateTrackGenre(Track track, String genre) {
+    void updateTrackGenre(Track track, String genre) {
         if (genre != null && !genre.isEmpty()) {
             track.setGenre(genre);
         } else if (genre != null) {
@@ -191,16 +197,16 @@ public class TrackService {
         }
     }
 
-    private void updateTrackDuration(Track track, int duration) {
+    void updateTrackDuration(Track track, int duration) {
         if (duration > 0) {
             track.setDuration(duration);
         }
     }
 
-    private void addPlaylistToTrack(Track track, Long playlistId) {
+    void addPlaylistToTrack(Track track, Long playlistId) {
         if (playlistId != null) {
             Playlist playlist = playlistRepository.findById(playlistId)
-                    .orElseThrow(() -> new RuntimeException(
+                    .orElseThrow(() -> new ResourceNotFoundException(
                             "Playlist not found with ID: " + playlistId));
             if (!track.getPlaylists().contains(playlist)) {
                 track.getPlaylists().add(playlist);
@@ -208,10 +214,10 @@ public class TrackService {
         }
     }
 
-    private void addUserToTrack(Track track, Long userId) {
+    void addUserToTrack(Track track, Long userId) {
         if (userId != null) {
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException(
+                    .orElseThrow(() -> new ResourceNotFoundException(
                             "User not found with ID: " + userId));
             if (!track.getUsers().contains(user)) {
                 track.getUsers().add(user);
@@ -222,7 +228,7 @@ public class TrackService {
     @Transactional
     public void deleteTrack(Long trackId) {
         Track track = trackRepository.findById(trackId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Track not found with ID: " + trackId));
 
         Album album = track.getAlbum();
@@ -264,7 +270,7 @@ public class TrackService {
 
     private String buildTracksCacheKey(String user, String albumTitle, String title,
                                        String genre, String playlistName, int page, int size) {
-        return String.format("albums_%s_%s_%s_%s_%s_%d_%d",
+        return String.format("tracks_%s_%s_%s_%s_%s_%d_%d",
                 user != null ? user : "all",
                 albumTitle != null ? albumTitle : "all",
                 title != null ? title : "all",
@@ -290,7 +296,7 @@ public class TrackService {
         List<Track> tracks = createTracksFromRequests(requests, albums, users);
         List<Track> savedTracks = saveAllTracks(tracks);
 
-        clearCacheAfterBulkOperation();
+        cacheService.clear();
         logBulkOperation(savedTracks.size());
 
         return mapToTrackResponses(savedTracks);
@@ -304,7 +310,7 @@ public class TrackService {
         requests.forEach(this::validateSingleRequest);
     }
 
-    private void validateSingleRequest(CreateTrackRequest request) {
+    void validateSingleRequest(CreateTrackRequest request) {
         if (request == null) {
             throw new ValidationException("Request in list must not be null");
         }
@@ -387,9 +393,6 @@ public class TrackService {
         return trackRepository.saveAll(tracks);
     }
 
-    private void clearCacheAfterBulkOperation() {
-        cacheService.clear();
-    }
 
     private void logBulkOperation(int tracksCount) {
         logger.info("Added {} tracks in bulk operation", tracksCount);

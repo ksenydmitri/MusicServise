@@ -20,17 +20,18 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
+@Transactional
 public class PlaylistService {
     private final PlaylistRepository playlistRepository;
     private final TrackRepository trackRepository;
     private final UserRepository userRepository;
-    private final CacheConfig cacheService;
+    private final CacheService cacheService;
 
     @Autowired
     public PlaylistService(PlaylistRepository playlistRepository,
                            TrackRepository trackRepository,
                            UserRepository userRepository,
-                           CacheConfig cacheService) {
+                           CacheService cacheService) {
         this.playlistRepository = playlistRepository;
         this.trackRepository = trackRepository;
         this.userRepository = userRepository;
@@ -53,7 +54,7 @@ public class PlaylistService {
     }
 
     @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
-    private Page<Playlist> fetchPlaylistsFromDB(
+    Page<Playlist> fetchPlaylistsFromDB(
             String user, String name, Pageable pageable) {
         if (user != null && name != null) {
             return playlistRepository.findByUserUsernameAndNameNative(
@@ -67,7 +68,7 @@ public class PlaylistService {
         }
     }
 
-    private String buildPlaylistsCacheKey(
+    String buildPlaylistsCacheKey(
             String user, String name, int page, int size, String sortBy) {
         return String.format("playlists_%s_%s_page%d_size%d_sort%s",
                 user != null ? user : "all",
@@ -132,13 +133,13 @@ public class PlaylistService {
         return mapToPlaylistResponse(savedPlaylist);
     }
 
-    private void updatePlaylistName(Playlist playlist, String name) {
+    void updatePlaylistName(Playlist playlist, String name) {
         if (name != null) {
             playlist.setName(name);
         }
     }
 
-    private void addUserToPlaylist(Playlist playlist, Long userId) {
+    void addUserToPlaylist(Playlist playlist, Long userId) {
         if (userId != null) {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -148,7 +149,7 @@ public class PlaylistService {
         }
     }
 
-    private void addTrackToPlaylist(Playlist playlist, Long trackId) {
+    void addTrackToPlaylist(Playlist playlist, Long trackId) {
         if (trackId != null) {
             Track track = trackRepository.findById(trackId)
                     .orElseThrow(() -> new ResourceNotFoundException("Track not found"));
@@ -158,7 +159,7 @@ public class PlaylistService {
         }
     }
 
-    private void evictAllPlaylistCaches() {
+    void evictAllPlaylistCaches() {
         cacheService.evictByPattern("playlist_*");
         cacheService.evictByPattern("playlists_*");
     }

@@ -1,12 +1,14 @@
 package music.service.config;
 
 import java.util.*;
+
+import music.service.service.CacheService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CacheConfig {
+public class CacheConfig implements CacheService {
 
     private static final Logger logger = LoggerFactory.getLogger(CacheConfig.class);
     private static final int MAX_CACHE_SIZE = 100;

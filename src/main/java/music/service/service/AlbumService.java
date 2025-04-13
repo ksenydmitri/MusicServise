@@ -24,11 +24,11 @@ public class AlbumService {
     private static final Logger logger = LoggerFactory.getLogger(AlbumService.class);
     private final AlbumRepository albumRepository;
     private final UserRepository userRepository;
-    private final CacheConfig cacheService;
+    private final CacheService cacheService;
 
     @Autowired
     public AlbumService(AlbumRepository albumRepository,
-                        UserRepository userRepository, CacheConfig cacheService) {
+                        UserRepository userRepository, CacheService cacheService) {
         this.albumRepository = albumRepository;
         this.userRepository = userRepository;
         this.cacheService = cacheService;
@@ -37,19 +37,24 @@ public class AlbumService {
     @Transactional
     public Page<Album> getAllAlbums(String user, String title, int page, int size, String sortBy) {
         String cacheKey = buildAlbumsCacheKey(user, title, page, size, sortBy);
+        logger.debug("Generated cache key: {}", cacheKey);
 
         if (cacheService.containsKey(cacheKey)) {
             logger.info("Cache hit for key: {}", cacheKey);
-            return (Page<Album>) cacheService.get(cacheKey);
+            Object cachedResult = cacheService.get(cacheKey);
+            logger.debug("Cached result: {}", cachedResult);
+            return (Page<Album>) cachedResult;
         }
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
         Page<Album> albums = fetchAlbumsFromDatabase(user, title, pageable);
+        logger.debug("Fetched from database: {}", albums);
+
         cacheService.put(cacheKey, albums);
         return albums;
     }
 
-    private Page<Album> fetchAlbumsFromDatabase(String user, String title, Pageable pageable) {
+    Page<Album> fetchAlbumsFromDatabase(String user, String title, Pageable pageable) {
         if (user != null && title != null) {
             return albumRepository.findByUserUsernameAndTitleNative(user, title, pageable);
         } else if (user != null) {
@@ -63,7 +68,7 @@ public class AlbumService {
 
     private String buildAlbumsCacheKey(
             String user, String title, int page, int size, String sortBy) {
-        return String.format("albums_%s_%s_page%d_size%d_sort%s",
+        return String.format("albums_%s_%s_page%d_size_%d_sort_%s",
                 user != null ? user : "all",
                 title != null ? title : "all",
                 page, size, sortBy
@@ -103,16 +108,22 @@ public class AlbumService {
 
     @Transactional
     public AlbumResponse addAlbum(CreateAlbumRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        Album album = new Album(request.getName());
-        if (!album.getUsers().contains(user)) {
-            album.getUsers().add(user);
+        // Проверяем, что запрос валиден
+        if (request == null || request.getName() == null ||
+                request.getName().isEmpty() || request.getUserId() == null) {
+            throw new IllegalArgumentException("Invalid album creation request");
         }
-        Album savedAlbum = albumRepository.save(album);
 
-        evictAllAlbumCaches();
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("" +
+                        "User not found with ID: " + request.getUserId()));
+
+        Album album = new Album();
+        album.setTitle(request.getName());
+        album.getUsers().add(user);
+
+        Album savedAlbum = albumRepository.save(album);
+        cacheService.evictByPattern("albums_*");
 
         return mapToAlbumResponse(savedAlbum);
     }
