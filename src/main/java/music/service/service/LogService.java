@@ -1,27 +1,96 @@
 package music.service.service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPInputStream;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.stereotype.Service;
 
 @Service
 public class LogService {
 
     private static final String LOG_DIRECTORY = "logs/";
+    private final Map<String, String> taskStatus = new ConcurrentHashMap<>();
+    private final Map<String, Resource> taskFiles = new ConcurrentHashMap<>();
+
+    /**
+     * Асинхронно запускает генерацию лог-файла.
+     *
+     * @param date Дата логов в формате yyyy-MM-dd.
+     * @return Уникальный ID задачи.
+     */
+    @Async
+    public String startLogGeneration(String date) {
+        String taskId = generateTaskId();
+        taskStatus.put(taskId, "PROCESSING");
+
+        // Выполнение в отдельном потоке
+        new Thread(() -> {
+            try {
+                // Эмуляция долгой работы
+                Thread.sleep(5000);
+
+                // Генерация лог-файла (эмуляция)
+                String logFileName = String.format("application.log.%s.gz", date);
+                Path path = Paths.get(LOG_DIRECTORY + logFileName);
+                File file = path.toFile();
+
+                if (!file.exists()) {
+                    // Создаем фиктивный файл, если его нет
+                    file.createNewFile();
+                    try (FileWriter writer = new FileWriter(file)) {
+                        writer.write("Sample log data for " + date);
+                    }
+                }
+
+                taskFiles.put(taskId, new UrlResource(file.toURI()));
+                taskStatus.put(taskId, "COMPLETED");
+            } catch (Exception e) {
+                taskStatus.put(taskId, "FAILED");
+            }
+        }).start();
+
+        return taskId;
+    }
+
+    /**
+     * Возвращает статус выполнения задачи по её ID.
+     *
+     * @param taskId Уникальный идентификатор задачи.
+     * @return Статус задачи (PROCESSING, COMPLETED, FAILED, NOT_FOUND).
+     */
+    public String getTaskStatus(String taskId) {
+        return taskStatus.getOrDefault(taskId, "NOT_FOUND");
+    }
+
+    /**
+     * Возвращает лог-файл по ID задачи.
+     *
+     * @param taskId Уникальный идентификатор задачи.
+     * @return Resource для файла логов.
+     * @throws IOException Если файл не найден.
+     */
+    public Resource getLogFile(String taskId) throws IOException {
+        if (!taskFiles.containsKey(taskId)) {
+            return null;
+        }
+        return taskFiles.get(taskId);
+    }
 
     /**
      * Возвращает Resource для файла логов за указанную дату.
      *
-     * @param date Дата в формате yyyy-MM-dd.
+     * @param date       Дата в формате yyyy-MM-dd.
+     * @param index      Индекс файла.
+     * @param uncompress Нужно ли распаковать файл.
      * @return Resource для файла логов.
      * @throws IOException Если произошла ошибка при работе с файлом.
      */
@@ -66,13 +135,11 @@ public class LogService {
     }
 
     /**
-     * Удаляет временный файл.
+     * Генерирует уникальный идентификатор задачи.
      *
-     * @param file Файл для удаления.
+     * @return Уникальный ID задачи.
      */
-    public void deleteTempFile(File file) {
-        if (file.exists()) {
-            file.delete();
-        }
+    private String generateTaskId() {
+        return "TASK-" + System.currentTimeMillis();
     }
 }
