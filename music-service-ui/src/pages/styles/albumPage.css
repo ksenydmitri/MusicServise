@@ -1,0 +1,17 @@
+.album-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 16px;
+}
+
+.album-page h1 {
+    font-size: 2em;
+    margin-bottom: 16px;
+}
+
+.album-page img {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 16px;
+}

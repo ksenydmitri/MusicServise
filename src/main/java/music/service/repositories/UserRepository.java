@@ -5,7 +5,13 @@ import music.service.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import javax.validation.constraints.NotBlank;
+
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsernameOrEmail(String username, String email);
+
+    boolean existsByUsername(@NotBlank(message = "Username is required") String username);
+
+    Optional<User> findByUsername(String username);
 }

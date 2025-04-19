@@ -1,0 +1,36 @@
+.track-list {
+    margin: 16px;
+    padding: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.track-list h3 {
+    margin-bottom: 8px;
+    font-size: 1.3em;
+}
+
+.track-list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.track-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+.track-list li:last-child {
+    border-bottom: none;
+}
+
+.track-number {
+    font-weight: bold;
+}
+
+.track-title {
+    flex: 1;
+    margin-left: 8px;
+}

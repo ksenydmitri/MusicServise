@@ -116,7 +116,12 @@
       <version>5.2.0</version>
       <scope>test</scope>
     </dependency>
-
+    <!-- JWT поддержка -->
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt</artifactId>
+      <version>0.9.1</version>
+    </dependency>
   </dependencies>
 
   <build>

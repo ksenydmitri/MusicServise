@@ -1,0 +1,210 @@
+/* Общие стили */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Навигация */
+.navbar {
+    background-color: #333;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-brand a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.navbar-links a {
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    background-color: #1db954;
+}
+
+/* Главная страница */
+.home-page {
+    padding: 20px;
+}
+
+.search-form {
+    margin: 20px 0;
+    display: flex;
+}
+
+.search-form input {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px 0 0 4px;
+}
+
+.search-form button {
+    padding: 10px 20px;
+    background-color: #1db954;
+    color: white;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+}
+
+.albums-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+/* Карточка альбома */
+.album-card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.album-card:hover {
+    transform: translateY(-5px);
+}
+
+.album-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.album-card h3, .album-card p {
+    padding: 0 10px 10px;
+    margin: 5px 0;
+}
+
+.album-card a {
+    text-decoration: none;
+    color: #333;
+}
+
+/* Страница альбома */
+.album-page {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.album-header {
+    display: flex;
+    margin-bottom: 30px;
+}
+
+.album-header img {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    margin-right: 30px;
+}
+
+.album-info h1 {
+    font-size: 2rem;
+    margin: 0 0 10px;
+}
+
+.album-info h2 {
+    font-size: 1.5rem;
+    margin: 0 0 10px;
+    color: #666;
+}
+
+/* Список треков */
+.track-list {
+    margin-top: 20px;
+}
+
+.track-list ul {
+    list-style: none;
+    padding: 0;
+}
+
+.track-list li {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+}
+
+.track-number {
+    width: 30px;
+    color: #666;
+}
+
+.track-title {
+    flex: 1;
+}
+
+.track-duration {
+    color: #666;
+}
+
+/* Страницы входа/регистрации */
+.login-page, .register-page {
+    max-width: 400px;
+    margin: 50px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.login-page h1, .register-page h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.login-page form, .register-page form {
+    display: flex;
+    flex-direction: column;
+}
+
+.login-page input, .register-page input {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.login-page button, .register-page button {
+    padding: 10px;
+    background-color: #1db954;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.login-page p, .register-page p {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.login-page a, .register-page a {
+    color: #1db954;
+    text-decoration: none;
+}

@@ -1,0 +1,46 @@
+/* Общий стиль для навигации */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #007bff; /* Синий фон */
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+/* Ссылки */
+.navbar a {
+    text-decoration: none;
+    color: white;
+    margin-right: 15px;
+    font-size: 16px;
+    transition: color 0.3s;
+}
+
+.navbar a:hover {
+    color: #ffc107; /* Желтый цвет при наведении */
+}
+
+/* Кнопка "Выйти" */
+.navbar button {
+    background-color: #ffc107; /* Желтая кнопка */
+    border: none;
+    padding: 5px 10px;
+    color: black;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.navbar button:hover {
+    background-color: #e0a800; /* Более темный желтый при наведении */
+}
+
+/* Приветствие */
+.navbar span {
+    margin-right: 10px;
+    font-size: 16px;
+    font-weight: bold;
+}

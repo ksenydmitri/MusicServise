@@ -1,0 +1,31 @@
+.track-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px;
+    text-align: left;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    background-color: #f9f9f9;
+}
+
+.track-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: scale(1.02);
+}
+
+.track-card h3 {
+    font-size: 1.2em;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.track-card p {
+    margin: 4px 0;
+    font-size: 1em;
+    color: #555;
+}
+
+.track-card p span {
+    font-weight: bold;
+    color: #444;
+}
