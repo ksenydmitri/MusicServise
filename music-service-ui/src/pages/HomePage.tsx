@@ -17,7 +17,7 @@ const HomePage = () => {
         setLoading(true);
         setErrorMessage(null); // Очистка предыдущих сообщений об ошибке
         try {
-            const response = await trackApi.getTracks(page);
+            const response = await trackApi.getTracks({page, term, signal, title: searchTerm });
             console.log('Ответ сервера:', response.data);
 
             if (response.data.content) {
@@ -67,7 +67,7 @@ const HomePage = () => {
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await trackApi.getTracks({ search: searchTerm });
+            const response = await trackApi.getTracks({ title: searchTerm });
 
             // Получаем треки из поля "content"
             if (response.data.content) {

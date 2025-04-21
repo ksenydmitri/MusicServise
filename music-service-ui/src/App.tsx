@@ -5,6 +5,8 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AlbumPage from './pages/AlbumPage';
+import CreateAlbumPage from './pages/CreateAlbumPage';
+import UserInfoPage from './pages/UserInfoPage';
 
 function App() {
     return (
@@ -17,6 +19,8 @@ function App() {
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/album/:id" element={<AlbumPage />} />
+                        <Route path="/create-album" element={<CreateAlbumPage />} />
+                        <Route path="/user-info" element={<UserInfoPage />} />
                     </Routes>
                 </div>
             </BrowserRouter>

@@ -51,6 +51,7 @@ export const playlistApi = {
 };
 
 export const userApi = {
+    getCurrentUser: () => api.get('/auth/me'),
     getUsers: () => api.get('/users'),
     getUser: (id: number) => api.get(`/users/${id}`),
     searchUser: (query: string) => api.get('/users/search', { params: { query } }),

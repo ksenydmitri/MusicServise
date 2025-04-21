@@ -22,11 +22,10 @@ import java.io.IOException;
 public class LogController {
 
     private final LogService logService;
-    private final VisitCounterService visitCounterService;
 
-    public LogController(LogService logService, VisitCounterService visitCounterService) {
+    public LogController(LogService logService) {
         this.logService = logService;
-        this.visitCounterService = visitCounterService;
+
     }
 
     @PostMapping
@@ -41,10 +40,8 @@ public class LogController {
                     )
             }
     )
-    public ResponseEntity<String> createLogFile(
-            @Parameter(description = "Дата логов в формате yyyy-MM-dd", example = "2023-10-01", required = true)
-            @RequestParam String date) {
-        String taskId = logService.startLogGeneration(date);
+    public ResponseEntity<String> createLogFile(@RequestParam String date) {
+        String taskId = logService.startLogGeneration(date).join();
         return ResponseEntity.accepted().body(taskId);
     }
 
@@ -69,7 +66,7 @@ public class LogController {
 
     @GetMapping("/{taskId}/file")
     @Operation(
-            summary = "Скачать лог-файл",
+            summary = "Скачать лог-файл по ID задачи",
             description = "Возвращает лог-файл, если задача завершена.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Файл найден"),
@@ -77,45 +74,15 @@ public class LogController {
             }
     )
     public ResponseEntity<Resource> getLogFile(
-            @Parameter(description = "ID задачи", example = "TASK-123456")
-            @PathVariable String taskId) {
-        try {
-            Resource resource = logService.getLogFile(taskId);
-            if (resource == null) {
-                return ResponseEntity.notFound().build();
-            }
-
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"" + resource.getFilename() + "\"")
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(resource);
-        } catch (IOException e) {
-            return ResponseEntity.internalServerError().build();
+            @Parameter(description = "ID задачи", example = "TASK-123456") @PathVariable String taskId) {
+        Resource resource = logService.getLogFile(taskId);
+        if (resource == null) {
+            return ResponseEntity.notFound().build();
         }
-    }
 
-    @PostMapping("/visits")
-    @Operation(
-            summary = "Увеличить счётчик посещений",
-            description = "Увеличивает количество посещений для указанного URL."
-    )
-    public ResponseEntity<Void> incrementVisitCount(
-            @Parameter(description = "URL для подсчёта посещений", example = "/logs")
-            @RequestParam String url) {
-        visitCounterService.incrementVisitCount(url);
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/visits")
-    @Operation(
-            summary = "Получить количество посещений",
-            description = "Возвращает количество посещений для указанного URL."
-    )
-    public ResponseEntity<Integer> getVisitCount(
-            @Parameter(description = "URL для подсчёта посещений", example = "/logs")
-            @RequestParam String url) {
-        int count = visitCounterService.getVisitCount(url);
-        return ResponseEntity.ok(count);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 }

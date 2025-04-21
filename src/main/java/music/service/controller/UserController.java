@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import music.service.dto.CreateUserRequest;
 import music.service.dto.UpdateUserRequest;
@@ -119,4 +120,18 @@ public class UserController {
         userService.removeUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not logged in");
+        }
+
+        // Fetch full user details by ID
+        User user = userService.getUserById(userId);
+        return ResponseEntity.ok(userService.mapToUserResponse(user));
+    }
+
+
 }

@@ -11,6 +11,8 @@ const Navbar = () => {
             {isAuthenticated ? (
                 <>
                     <span>Добро пожаловать!</span>
+                    <Link to="/create-album">Создать альбом</Link>
+                    <Link to="/user-info">Информация о пользователе</Link>
                     <button onClick={logout}>Выйти</button>
                 </>
             ) : (

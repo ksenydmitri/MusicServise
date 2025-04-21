@@ -4,141 +4,78 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.zip.GZIPInputStream;
 
 @Service
 public class LogService {
 
     private static final String LOG_DIRECTORY = "logs/";
+    private static final String SOURCE_LOG_FILE = "logs/application.log";
     private final Map<String, String> taskStatus = new ConcurrentHashMap<>();
     private final Map<String, Resource> taskFiles = new ConcurrentHashMap<>();
 
-    /**
-     * Асинхронно запускает генерацию лог-файла.
-     *
-     * @param date Дата логов в формате yyyy-MM-dd.
-     * @return Уникальный ID задачи.
-     */
     @Async
-    public String startLogGeneration(String date) {
+    public CompletableFuture<String> startLogGeneration(String date) {
         String taskId = generateTaskId();
         taskStatus.put(taskId, "PROCESSING");
-
-        // Выполнение в отдельном потоке
-        new Thread(() -> {
+        CompletableFuture.runAsync(() -> {
             try {
-                // Эмуляция долгой работы
-                Thread.sleep(5000);
-
-                // Генерация лог-файла (эмуляция)
-                String logFileName = String.format("application.log.%s.gz", date);
-                Path path = Paths.get(LOG_DIRECTORY + logFileName);
-                File file = path.toFile();
-
-                if (!file.exists()) {
-                    // Создаем фиктивный файл, если его нет
-                    file.createNewFile();
-                    try (FileWriter writer = new FileWriter(file)) {
-                        writer.write("Sample log data for " + date);
-                    }
-                }
-
-                taskFiles.put(taskId, new UrlResource(file.toURI()));
+                Thread.sleep(20000);
+                Path logFilePath = filterLogsByDate(date);
+                taskFiles.put(taskId, new UrlResource(logFilePath.toUri()));
                 taskStatus.put(taskId, "COMPLETED");
             } catch (Exception e) {
                 taskStatus.put(taskId, "FAILED");
+                e.printStackTrace();
             }
-        }).start();
-
-        return taskId;
+        });
+        return CompletableFuture.completedFuture(taskId);
     }
 
-    /**
-     * Возвращает статус выполнения задачи по её ID.
-     *
-     * @param taskId Уникальный идентификатор задачи.
-     * @return Статус задачи (PROCESSING, COMPLETED, FAILED, NOT_FOUND).
-     */
+    private Path filterLogsByDate(String date) throws IOException {
+
+        Path logDir = Paths.get(LOG_DIRECTORY);
+        if (!Files.exists(logDir)) {
+            Files.createDirectories(logDir);
+        }
+
+        String outputFileName = String.format("application_%s.log", date);
+        Path outputPath = logDir.resolve(outputFileName);
+
+        Path sourcePath = Paths.get(SOURCE_LOG_FILE);
+        if (!Files.exists(sourcePath)) {
+            throw new FileNotFoundException("Source log file not found: " + sourcePath.toAbsolutePath());
+        }
+
+        try (BufferedReader reader = Files.newBufferedReader(sourcePath);
+             BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith(date)) {
+                    writer.write(line);
+                    writer.newLine();
+                }
+            }
+        }
+
+        return outputPath;
+    }
+
     public String getTaskStatus(String taskId) {
         return taskStatus.getOrDefault(taskId, "NOT_FOUND");
     }
 
-    /**
-     * Возвращает лог-файл по ID задачи.
-     *
-     * @param taskId Уникальный идентификатор задачи.
-     * @return Resource для файла логов.
-     * @throws IOException Если файл не найден.
-     */
-    public Resource getLogFile(String taskId) throws IOException {
-        if (!taskFiles.containsKey(taskId)) {
-            return null;
-        }
-        return taskFiles.get(taskId);
+    public Resource getLogFile(String taskId) {
+        return taskFiles.getOrDefault(taskId, null);
     }
 
-    /**
-     * Возвращает Resource для файла логов за указанную дату.
-     *
-     * @param date       Дата в формате yyyy-MM-dd.
-     * @param index      Индекс файла.
-     * @param uncompress Нужно ли распаковать файл.
-     * @return Resource для файла логов.
-     * @throws IOException Если произошла ошибка при работе с файлом.
-     */
-    public Resource getLogFileByDate(String date, int index, boolean uncompress)
-            throws IOException {
-        LocalDate logDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
-        String logFileName = String.format("application.log.%s.%d.gz", logDate, index);
-        Path path = Paths.get(LOG_DIRECTORY + logFileName);
-        File file = path.toFile();
-
-        if (!file.exists()) {
-            throw new IOException("File not found: " + path.toAbsolutePath());
-        }
-
-        if (uncompress) {
-            String uncompressedFileName = String.format(
-                    "application.log.%s.%d.log", logDate, index);
-            File uncompressedFile = new File(LOG_DIRECTORY + uncompressedFileName);
-            uncompressGzipFile(file, uncompressedFile);
-            return new UrlResource(uncompressedFile.toURI());
-        } else {
-            return new UrlResource(path.toUri());
-        }
-    }
-
-    /**
-     * Распаковывает .gz файл.
-     *
-     * @param gzipFile   Сжатый файл.
-     * @param outputFile Выходной файл.
-     * @throws IOException Если произошла ошибка при распаковке.
-     */
-    private void uncompressGzipFile(File gzipFile, File outputFile) throws IOException {
-        try (GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(gzipFile));
-             FileOutputStream fileOutputStream = new FileOutputStream(outputFile)) {
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = gzipInputStream.read(buffer)) > 0) {
-                fileOutputStream.write(buffer, 0, len);
-            }
-        }
-    }
-
-    /**
-     * Генерирует уникальный идентификатор задачи.
-     *
-     * @return Уникальный ID задачи.
-     */
     private String generateTaskId() {
         return "TASK-" + System.currentTimeMillis();
     }

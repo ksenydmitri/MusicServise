@@ -3,51 +3,47 @@ package music.service.controller;
 import music.service.dto.AuthRequest;
 import music.service.dto.AuthResponse;
 import music.service.dto.CreateUserRequest;
-import music.service.model.User;
-import music.service.repositories.UserRepository;
+import music.service.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
-    private final UserRepository userRepository;
 
-    public AuthController(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody CreateUserRequest request) {
-        // Проверка на существующего пользователя
-        if (userRepository.existsByUsername(request.getUsername())) {
-            return ResponseEntity.badRequest().body("Username is taken");
+        try {
+            String message = authService.register(request);
+            return ResponseEntity.ok(message);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
         }
-
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setPassword(request.getPassword()); // Без хэширования!
-        user.setEmail(request.getEmail());
-        userRepository.save(user);
-
-        return ResponseEntity.ok("User registered");
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Проверка пароля (без хэширования)
-        if (!user.getPassword().equals(request.getPassword())) {
-            return ResponseEntity.badRequest().body("Invalid password");
+        try {
+            AuthResponse response = authService.login(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
         }
+    }
 
-
-        AuthResponse response = new AuthResponse();
-        response.setToken(request.getUsername());
-        response.setUsername(user.getUsername());
-
-        return ResponseEntity.ok(response);
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String token) {
+        try {
+            String username = authService.getCurrentUser(token);
+            return ResponseEntity.ok(username);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(401).body("Unauthorized");
+        }
     }
 }

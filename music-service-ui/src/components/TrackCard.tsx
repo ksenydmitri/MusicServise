@@ -10,7 +10,7 @@ const TrackCard = ({ track }: TrackCardProps) => {
         <div className="track-card">
             <h3>{track.title}</h3>
             <p>Duration: {track.duration}</p>
-            <p>Artist: {track.artist}</p>
+            <p>Artist: {track.usernames}</p>
         </div>
     );
 };

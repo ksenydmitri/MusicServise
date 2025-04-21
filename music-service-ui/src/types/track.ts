@@ -4,5 +4,5 @@ export interface Track {
     title: string;
     duration: string;
     albumId?: number;
-    artist: string;
+    usernames: string;
 }

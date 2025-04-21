@@ -18,9 +18,6 @@ public class VisitsController {
         this.visitCounterService = visitCounterService;
     }
 
-    /**
-     * Увеличить счётчик посещений для заданного URL.
-     */
     @PostMapping
     @Operation(summary = "Увеличить счётчик посещений", description = "Увеличивает количество посещений для указанного URL.")
     public ResponseEntity<Void> incrementVisitCount(
@@ -30,9 +27,6 @@ public class VisitsController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Получить текущее количество посещений для заданного URL.
-     */
     @GetMapping
     @Operation(summary = "Получить количество посещений", description = "Возвращает количество посещений для указанного URL.")
     public ResponseEntity<Integer> getVisitCount(
@@ -42,9 +36,6 @@ public class VisitsController {
         return ResponseEntity.ok(count);
     }
 
-    /**
-     * Получить общее количество посещений.
-     */
     @GetMapping("/total")
     @Operation(summary = "Получить общее количество посещений", description = "Возвращает общее количество посещений по всем URL.")
     public ResponseEntity<Integer> getTotalVisitCount() {
