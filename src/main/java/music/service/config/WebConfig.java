@@ -27,11 +27,15 @@ public class WebConfig implements WebMvcConfigurer {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**") // Настройка для всех маршрутов
-                        .allowedOrigins("http://localhost:3000") // Разрешить запросы с вашего фронтенд-домена
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH"); // Указать разрешенные методы
+                registry.addMapping("/**") // Разрешаем запросы на всех маршрутах
+                        .allowedOrigins("http://localhost:3000")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH") // Разрешённые HTTP-методы
+                        .allowedHeaders("*") // Все заголовки разрешены
+                        .allowCredentials(true); // Разрешаем передачу cookies
             }
         };
     }
+
+
 
 }

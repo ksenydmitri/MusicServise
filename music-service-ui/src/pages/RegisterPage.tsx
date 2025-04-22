@@ -8,8 +8,8 @@ import { useAuth } from "../context/AuthContext";
 const RegisterPage = () => {
     const [formData, setFormData] = useState<RegisterRequest>({
         username: '',
+        email: '',
         password: '',
-        email: ''
     });
 
     const { login } = useAuth();
@@ -33,7 +33,7 @@ const RegisterPage = () => {
         try {
             // Отправка данных на сервер
             const response = await authApi.register(
-                formData.username, formData.password, formData.email
+                formData.username, formData.email,formData.password
             );
 
             if (response.data.token) {
@@ -44,11 +44,10 @@ const RegisterPage = () => {
                 setErrorMessage('Не удалось получить токен. Попробуйте снова.');
             }
         } catch (error: any) {
-            // Обработка ошибок сервера
-            const errorResponse = error?.response?.data || "Неизвестная ошибка сервера";
+            const errorResponse = error?.response?.data?.error || "Неизвестная ошибка сервера";
             setErrorMessage(errorResponse);
         } finally {
-            setIsLoading(false); // Выключение состояния загрузки
+            setIsLoading(false);
         }
     };
 

@@ -1,11 +1,15 @@
 package music.service.dto;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 
+@Getter
+@Setter
 public class CustomUserDetails implements UserDetails {
-    private final Long id; // ID for the user
+    private final Long id;
     private final String username;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
@@ -17,42 +21,23 @@ public class CustomUserDetails implements UserDetails {
         this.authorities = authorities;
     }
 
-    public Long getId() {
-        return id; // Getter for ID
-    }
-
-    @Override
-    public String getUsername() {
-        return username;
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
-    }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
-    }
-
     @Override
     public boolean isAccountNonExpired() {
-        return true; // Example implementation
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // Example implementation
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // Example implementation
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return true; // Example implementation
+        return true;
     }
 }

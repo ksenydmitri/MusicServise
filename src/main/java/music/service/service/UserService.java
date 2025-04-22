@@ -72,21 +72,6 @@ public class UserService {
         response.setUsername(user.getUsername());
         response.setEmail(user.getEmail());
         response.setRole(user.getRole());
-        List<AlbumResponse> albumResponses = user.getAlbums().stream().map(album -> {
-            AlbumResponse albumResponse = new AlbumResponse();
-            albumResponse.setId(album.getId());
-            albumResponse.setTitle(album.getTitle());
-            albumResponse.setTracks(album.getTracks().stream()
-                    .map(Track::getTitle)
-                    .toList());
-            albumResponse.setArtists(album.getUsers().stream()
-                    .map(User::getUsername)
-                    .toList());
-
-            return albumResponse;
-        }).toList();
-        response.setAlbums(albumResponses);
-
         return response;
     }
 

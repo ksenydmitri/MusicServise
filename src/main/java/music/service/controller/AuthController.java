@@ -3,27 +3,34 @@ package music.service.controller;
 import music.service.dto.AuthRequest;
 import music.service.dto.AuthResponse;
 import music.service.dto.CreateUserRequest;
+import music.service.dto.UserResponse;
 import music.service.service.AuthService;
+import music.service.utils.JwtUtil;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
+    private final JwtUtil jwtUtil;
     private final AuthService authService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(JwtUtil jwtUtil, AuthService authService) {
+        this.jwtUtil = jwtUtil;
         this.authService = authService;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody CreateUserRequest request) {
+    public ResponseEntity<AuthResponse> register(@RequestBody CreateUserRequest request) {
         try {
-            String message = authService.register(request);
-            return ResponseEntity.ok(message);
+            AuthResponse response = authService.register(request);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException ex) {
-            return ResponseEntity.badRequest().body(ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null); // Или верните сообщение об ошибке
         }
     }
 
@@ -33,17 +40,20 @@ public class AuthController {
             AuthResponse response = authService.login(request);
             return ResponseEntity.ok(response);
         } catch (RuntimeException ex) {
-            return ResponseEntity.badRequest().body(ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
         }
     }
 
+
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<UserResponse> getCurrentUser(@RequestHeader("Authorization") String token) {
         try {
-            String username = authService.getCurrentUser(token);
-            return ResponseEntity.ok(username);
-        } catch (RuntimeException ex) {
-            return ResponseEntity.status(401).body("Unauthorized");
+            String cleanToken = token.replace("Bearer ", "");
+            String username = jwtUtil.extractUsername(cleanToken);
+            UserResponse userResponse = authService.getUserDetailsByUsername(username);
+            return ResponseEntity.ok(userResponse);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
 }

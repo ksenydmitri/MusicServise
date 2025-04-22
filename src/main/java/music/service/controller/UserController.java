@@ -128,7 +128,6 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not logged in");
         }
 
-        // Fetch full user details by ID
         User user = userService.getUserById(userId);
         return ResponseEntity.ok(userService.mapToUserResponse(user));
     }

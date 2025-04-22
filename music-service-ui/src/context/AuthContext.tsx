@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const logout = () => {
         setIsAuthenticated(false);
-        localStorage.removeItem('token'); // Удаляем токен при выходе
+        localStorage.removeItem('token');
     };
 
     return (
