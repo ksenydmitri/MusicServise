@@ -3,8 +3,11 @@ package music.service.dto;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
@@ -23,4 +26,6 @@ public class CreateTrackRequest {
 
     @NotNull(message = "User ID is required")
     private Long userId;
+
+    private MultipartFile mediaFile;
 }

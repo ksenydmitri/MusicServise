@@ -36,6 +36,9 @@ public class Track {
     @Column(name = "genre")
     private String genre;
 
+    @Column(name = "media_file_id", nullable = false)
+    private String mediaFileId;
+
     @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinTable(name = "tracks_playlists",
             joinColumns = @JoinColumn(name = "track_id"),

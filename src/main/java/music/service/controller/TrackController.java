@@ -16,10 +16,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 
 @RestController
@@ -66,7 +70,7 @@ public class TrackController {
         return ResponseEntity.ok(responses);
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Добавить новый трек",
             description = "Создает новый трек",
@@ -83,16 +87,20 @@ public class TrackController {
             }
     )
     public ResponseEntity<TrackResponse> addTrack(
-            @RequestBody @Valid CreateTrackRequest request) {
+            @RequestBody @Valid CreateTrackRequest request,
+            @RequestPart MultipartFile mediaFile) {
         try {
-            TrackResponse response = trackService.addTrack(request);
+            trackService.validateTrackFile(mediaFile);
+            TrackResponse response = trackService.addTrackWithMedia(request,mediaFile);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (ValidationException e) {
             throw new ValidationException(e.getMessage());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    @PostMapping("/bulk")
+    @PostMapping(value = "/bulk", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Добавить несколько треков",
             description = "Создает несколько треков за одну операцию",
@@ -111,7 +119,7 @@ public class TrackController {
             }
     )
     public ResponseEntity<List<TrackResponse>> addTracksBulk(
-            @RequestBody @Valid List<@Valid CreateTrackRequest> requests) {
+            @ModelAttribute @Valid List<CreateTrackRequest> requests) {
         try {
             List<TrackResponse> responses = trackService.addTracksBulk(requests);
             return ResponseEntity.status(HttpStatus.CREATED).body(responses);
@@ -162,4 +170,5 @@ public class TrackController {
         trackService.deleteTrack(id);
         return ResponseEntity.noContent().build();
     }
+
 }
