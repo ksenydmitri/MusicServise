@@ -3,6 +3,8 @@ package music.service.model;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.persistence.*;
+import javax.validation.constraints.Size;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,6 +31,10 @@ public class Album {
             joinColumns = @JoinColumn(name = "album_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> users = new LinkedHashSet<>();
+
+    @Size(max = 255)
+    @Column(name = "cover_image_id")
+    private String coverImageId;
 
     public Album() {
 

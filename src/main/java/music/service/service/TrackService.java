@@ -16,6 +16,7 @@ import music.service.exception.ResourceNotFoundException;
 import music.service.exception.ValidationException;
 import music.service.model.*;
 import music.service.repositories.*;
+import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,13 +42,14 @@ public class TrackService {
     private static final String TRACKS_CACHE_PREFIX = "tracks";
     private static final String TRACK_CACHE_PREFIX = "track";
     private final PlaylistRepository playlistRepository;
+    private final AlbumService albumService;
 
     @Autowired
     public TrackService(TrackRepository trackRepository,
                         AlbumRepository albumRepository,
                         UserRepository userRepository,
                         CacheService cacheService,
-                        Drive googleDriveService, MediaService mediaService, PlaylistRepository playlistRepository) {
+                        Drive googleDriveService, MediaService mediaService, PlaylistRepository playlistRepository, AlbumService albumService) {
         this.trackRepository = trackRepository;
         this.albumRepository = albumRepository;
         this.userRepository = userRepository;
@@ -55,21 +57,17 @@ public class TrackService {
         this.googleDriveService = googleDriveService;
         this.mediaService = mediaService;
         this.playlistRepository = playlistRepository;
+        this.albumService = albumService;
     }
 
 
     @Transactional
     public TrackResponse addTrackWithMedia(CreateTrackRequest request, MultipartFile mediaFile)
             throws ValidationException, IOException {
-
-        validateTrackRequest(request);
-        validateMediaFile(mediaFile);
-
-        File uploadedFile = uploadMediaToDrive(mediaFile, request.getTitle());
-        Track track = createTrackFromRequest(request);
+        Track track = createTrackFromRequest(request,mediaFile);
         Track savedTrack = saveTrackWithRelations(track, request.getUserId());
 
-        return buildTrackResponse(savedTrack, uploadedFile);
+        return buildTrackResponse(savedTrack,track.getMediaFileId());
     }
 
     @Transactional
@@ -90,15 +88,21 @@ public class TrackService {
         deleteMediaFileFromDrive(track.getMediaFileId());
         removeTrackRelations(track);
         trackRepository.delete(track);
-
         evictAllTrackCaches();
     }
+
+    @Transactional
+    public Track getTrackWithAlbum(Long trackId) {
+        return trackRepository.findTrackWithAlbumById(trackId)
+                .orElseThrow(() -> new ResourceNotFoundException("Track not found with ID: " + trackId));
+    }
+
 
     @Transactional
     public Page<Track> getAllTracks(String username, String albumTitle, String title,
                                     String genre, String playlistName, Pageable pageable) {
 
-        String cacheKey = buildTracksCacheKey(username, albumTitle, title, genre, playlistName, pageable);
+        String cacheKey = buildTracksCacheKey(username, albumTitle, pageable.getPageNumber(),DEFAULT_SIZE);
 
         if (cacheService.containsKey(cacheKey)) {
             logger.debug("Cache hit for key: {}", cacheKey);
@@ -111,13 +115,16 @@ public class TrackService {
     }
 
     @Transactional
-    public List<TrackResponse> addTracksBulk(List<CreateTrackRequest> requests) {
+    public List<TrackResponse> addTracksBulk(List<CreateTrackRequest> requests, List<MultipartFile> mediaFiles) {
+        if (requests.size() != mediaFiles.size()) {
+            throw new ValidationException("Количество треков и файлов должно совпадать");
+        }
         validateBulkRequest(requests);
 
         Map<Long, Album> albums = fetchAlbumsForRequests(requests);
         Map<Long, User> users = fetchUsersForRequests(requests);
 
-        List<Track> tracks = createTracksFromRequests(requests, albums, users);
+        List<Track> tracks = createTracksFromRequests(requests, albums, users, mediaFiles);
         List<Track> savedTracks = trackRepository.saveAll(tracks);
 
         cacheService.clear();
@@ -128,26 +135,39 @@ public class TrackService {
 
 
 
-    private Track createTrackFromRequest(CreateTrackRequest request) {
-        validateTrackFile(request.getMediaFile());
+
+    private Track createTrackFromRequest(CreateTrackRequest request, MultipartFile mediaFile) {
+        validateMediaFile(mediaFile);
+        validateTrackRequest(request);
         Album album = getAlbumById(request.getAlbumId());
 
-        Track track = new Track(request.getTitle(), request.getDuration());
+        Track track = new Track();
         track.setGenre(request.getGenre());
         track.setAlbum(album);
-        String mediaFileId = mediaService.uploadMedia(request.getMediaFile());
+        track.setTitle(request.getTitle());
+        track.setDuration(request.getDuration());
+        String mediaFileId = mediaService.uploadMedia(mediaFile);
         track.setMediaFileId(mediaFileId);
 
         return track;
     }
 
+
     private List<Track> createTracksFromRequests(List<CreateTrackRequest> requests,
                                                  Map<Long, Album> albums,
-                                                 Map<Long, User> users) {
+                                                 Map<Long, User> users,
+                                                 List<MultipartFile> mediaFiles) {
+        if (requests.size() != mediaFiles.size()) {
+            throw new ValidationException("Количество запросов и количество медиафайлов не совпадает");
+        }
+
         return requests.stream()
                 .map(request -> {
-                    String mediaFileId = mediaService.uploadMedia(request.getMediaFile());
-                    Track track = createTrackFromRequest(request);
+                    int index = requests.indexOf(request);
+                    MultipartFile mediaFile = mediaFiles.get(index);
+
+                    validateTrackFile(mediaFile);
+                    Track track = createTrackFromRequest(request, mediaFile);
                     Album album = albums.get(request.getAlbumId());
                     track.setAlbum(album);
                     User user = users.get(request.getUserId());
@@ -157,6 +177,7 @@ public class TrackService {
                 })
                 .collect(Collectors.toList());
     }
+
 
 
     private Track saveTrackWithRelations(Track track, Long userId) {
@@ -171,17 +192,6 @@ public class TrackService {
         return savedTrack;
     }
 
-    private File uploadMediaToDrive(MultipartFile mediaFile, String title) throws IOException {
-        File fileMetadata = new File();
-        fileMetadata.setName(title + "_" + System.currentTimeMillis());
-
-        try (InputStream fileStream = mediaFile.getInputStream()) {
-            return googleDriveService.files().create(
-                    fileMetadata,
-                    new InputStreamContent(mediaFile.getContentType(), fileStream)
-            ).setFields("id, webViewLink").execute();
-        }
-    }
 
     private void updateTrackFields(Track track, UpdateTrackRequest request) {
 
@@ -272,41 +282,34 @@ public class TrackService {
         }
     }
 
-    private String buildTracksCacheKey(String username, String albumTitle, String title,
-                                       String genre, String playlistName, Pageable pageable) {
-        return String.format("%s_%s_%s_%s_%s_%d_%d",
-                TRACKS_CACHE_PREFIX,
-                username != null ? username : "all",
-                albumTitle != null ? albumTitle : "all",
+    private String buildTracksCacheKey(
+            String user, String title, int page, int size) {
+        return String.format("albums_%s_%s_page%d_size_%d",
+                user != null ? user : "all",
                 title != null ? title : "all",
-                genre != null ? genre : "all",
-                playlistName != null ? playlistName : "all",
-                pageable.getPageNumber(),
-                pageable.getPageSize()
+                page, size
         );
     }
 
+
     private void evictTrackCache(Track track) {
+        String user = track.getUsers().isEmpty() ? "unknown_user" : track.getUsers().iterator().next().getUsername();
+        String albumTitle = track.getAlbum() != null ? track.getAlbum().getTitle() : "unknown_album";
         String cacheKey = buildTracksCacheKey(
-                track.getUsers().isEmpty() ? null : track.getUsers().iterator().next().getUsername(),
-                track.getAlbum() != null ? track.getAlbum().getTitle() : null,
-                track.getTitle(),
-                track.getGenre(),
-                null,
-                PageRequest.of(DEFAULT_PAGE, DEFAULT_SIZE)
+                user, albumTitle, DEFAULT_PAGE, DEFAULT_SIZE
         );
         cacheService.evict(cacheKey);
     }
+
 
     private void evictAllTrackCaches() {
         cacheService.evictByPattern(TRACKS_CACHE_PREFIX + "_*");
         cacheService.evictByPattern(TRACK_CACHE_PREFIX + "_*");
     }
 
-    private TrackResponse buildTrackResponse(Track track, File mediaFile) {
+    private TrackResponse buildTrackResponse(Track track, String mediaFileId) {
         TrackResponse response = mapToTrackResponse(track);
-        response.setMediaFileId(mediaFile.getId());
-        response.setMediaUrl(mediaFile.getWebViewLink());
+        response.setMediaFileId(mediaFileId);
         return response;
     }
 
@@ -315,11 +318,12 @@ public class TrackService {
                 .id(track.getId())
                 .title(track.getTitle())
                 .duration(track.getDuration())
-                .albumTitle(track.getAlbum() != null ? track.getAlbum().getTitle() : null)
+                .album(albumService.mapToAlbumResponse(track.getAlbum()))
                 .usernames(track.getUsers().stream().map(User::getUsername).collect(Collectors.toList()))
                 .releaseDate(track.getReleaseDate())
                 .playlists(track.getPlaylists().stream().map(Playlist::getName).collect(Collectors.toList()))
                 .genre(track.getGenre())
+                .mediaFileId(track.getMediaFileId())
                 .build();
     }
 
@@ -378,6 +382,18 @@ public class TrackService {
     }
 
     public void validateTrackFile(MultipartFile mediaFile) {
+        if (mediaFile == null || mediaFile.isEmpty()) {
+            throw new ValidationException("Файл отсутствует или пуст");
+        }
+
+        Tika tika = new Tika();
+        String detectedType;
+        try {
+            detectedType = tika.detect(mediaFile.getInputStream());
+        } catch (IOException e) {
+            throw new ValidationException("Не удалось определить тип файла", e);
+        }
+
         Set<String> allowedContentTypes = Set.of(
                 "audio/mpeg",    // MP3
                 "audio/wav",     // WAV
@@ -385,11 +401,13 @@ public class TrackService {
                 "audio/aac",     // AAC
                 "audio/flac"     // FLAC
         );
-        if (!allowedContentTypes.contains(mediaFile.getContentType())) {
+
+        if (!allowedContentTypes.contains(detectedType)) {
             throw new ValidationException("Недопустимый тип файла. " +
                     "Разрешены только аудиофайлы (MP3, WAV, AAC, FLAC)");
         }
     }
+
 
 
 }

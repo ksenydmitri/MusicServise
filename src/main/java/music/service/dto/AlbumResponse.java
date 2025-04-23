@@ -11,4 +11,5 @@ public class AlbumResponse {
     private String title;
     private List<String> artists;
     private List<String> tracks;
+    private String coverImageId;
 }

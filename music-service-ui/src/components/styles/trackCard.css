@@ -19,6 +19,15 @@
     margin-bottom: 8px;
 }
 
+.circular-avatar {
+    width: 80px; /* Размер изображения */
+    height: 80px;
+    border-radius: 50%; /* Делает форму круглой */
+    object-fit: cover; /* Убедитесь, что изображение масштабируется правильно */
+    border: 2px solid #ddd; /* Граница вокруг изображения */
+    margin-bottom: 10px; /* Расстояние от текста */
+}
+
 .track-card p {
     margin: 4px 0;
     font-size: 1em;
@@ -29,3 +38,4 @@
     font-weight: bold;
     color: #444;
 }
+

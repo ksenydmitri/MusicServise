@@ -16,9 +16,8 @@ public class TrackResponse {
     private int duration;
     private String genre;
     private LocalDate releaseDate;
-    private String albumTitle;
+    private AlbumResponse album;
     private List<String> usernames;
     private List<String> playlists;
-    private String mediaFileId; // ID файла в Google Drive
-    private String mediaUrl;
+    private String mediaFileId;
 }

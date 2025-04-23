@@ -27,8 +27,16 @@ export const authApi = {
 
 export const albumApi = {
     getAlbums: (params: any) => api.get('/albums', { params }),
+    getAlbumCover: (albumId: number) => api.get(`/albums/${albumId}`),
     getAlbum: (id: number) => api.get(`/albums/${id}`),
-    createAlbum: (data: any) => api.post('/albums', data),
+    createAlbum: (formData: FormData) => {
+        return axios.post('/albums', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+    },
     updateAlbum: (id: number, data: any) => api.patch(`/albums/${id}`, data),
     deleteAlbum: (id: number) => api.delete(`/albums/${id}`),
 };
@@ -40,6 +48,11 @@ export const trackApi = {
     createTracksBulk: (data: any[]) => api.post('/tracks/bulk', data),
     updateTrack: (id: number, data: any) => api.patch(`/tracks/${id}`, data),
     deleteTrack: (id: number) => api.delete(`/tracks/${id}`),
+    downloadTrack: (mediaFileId: string) => api.get(`/media/download/${mediaFileId}`, { responseType: 'blob' }),
+};
+
+export const mediaApi = {
+    downloadMedia: (mediaFileId: string) => api.get(`/media/download/${mediaFileId}`, { responseType: 'blob' }),
 };
 
 export const playlistApi = {

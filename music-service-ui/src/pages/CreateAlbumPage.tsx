@@ -1,37 +1,74 @@
-import React, { useState } from 'react';
-import { albumApi } from '../api/api'; // Подключаем API
-import './styles/createalbum.css'; // Подключите стили, если нужны
+import React, { useState, useContext } from 'react';
+import { albumApi } from '../api/api';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import './styles/createalbum.css';
 
 const CreateAlbumPage = () => {
+    const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+
     const [formData, setFormData] = useState({
         title: '',
-        artist: '',
-        description: '',
+        coverImage: null as File | null
     });
 
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setFormData(prev => ({ ...prev, coverImage: file }));
+
+            // Создаем превью для изображения
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreviewImage(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!isAuthenticated) {
+            setErrorMessage('Требуется авторизация');
+            return;
+        }
+
         setLoading(true);
         setSuccessMessage(null);
         setErrorMessage(null);
 
         try {
-            const response = await albumApi.createAlbum(formData); // Отправляем запрос для создания альбома
+            const formDataToSend = new FormData();
+            const request = {
+                title: formData.title,
+            };
+
+            formDataToSend.append('request', new Blob([JSON.stringify(request)], {
+                type: 'application/json'
+            }));
+
+            if (formData.coverImage) {
+                formDataToSend.append('coverFile', formData.coverImage);
+            }
+
+            const response = await albumApi.createAlbum(formDataToSend);
+
             setSuccessMessage('Альбом успешно создан!');
-            console.log('API Response:', response.data);
-            setFormData({ title: '', artist: '', description: '' });// Сбрасываем форму
+            setFormData({ title: '', coverImage: null });
+            setPreviewImage(null);
+            navigate(`/album/${response.data.id}`);
         } catch (error: any) {
             setErrorMessage(error?.response?.data?.message || 'Ошибка при создании альбома');
         } finally {
@@ -43,35 +80,38 @@ const CreateAlbumPage = () => {
         <div className="create-album-page">
             <h1>Создать новый альбом</h1>
             <form onSubmit={handleSubmit}>
-                <input
-                    type="text"
-                    name="title"
-                    placeholder="Название альбома"
-                    value={formData.title}
-                    onChange={handleChange}
-                    required
-                />
-                <input
-                    type="text"
-                    name="artist"
-                    placeholder="Исполнитель"
-                    value={formData.artist}
-                    onChange={handleChange}
-                    required
-                />
-                <textarea
-                    name="description"
-                    placeholder="Описание"
-                    value={formData.description}
-                    onChange={handleChange}
-                    required
-                ></textarea>
+                <div className="form-group">
+                    <label>Название альбома:</label>
+                    <input
+                        type="text"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label>Обложка альбома:</label>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                    />
+                    {previewImage && (
+                        <div className="image-preview">
+                            <img src={previewImage} alt="Предпросмотр обложки" />
+                        </div>
+                    )}
+                </div>
+
                 <button type="submit" disabled={loading}>
-                    {loading ? 'Создание...' : 'Создать'}
+                    {loading ? 'Создание...' : 'Создать альбом'}
                 </button>
             </form>
-            {successMessage && <p className="success-message">{successMessage}</p>}
-            {errorMessage && <p className="error-message">{errorMessage}</p>}
+
+            {successMessage && <div className="alert success">{successMessage}</div>}
+            {errorMessage && <div className="alert error">{errorMessage}</div>}
         </div>
     );
 };

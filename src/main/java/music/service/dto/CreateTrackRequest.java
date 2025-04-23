@@ -26,6 +26,4 @@ public class CreateTrackRequest {
 
     @NotNull(message = "User ID is required")
     private Long userId;
-
-    private MultipartFile mediaFile;
 }

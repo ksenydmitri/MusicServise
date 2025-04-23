@@ -37,3 +37,4 @@ build/
 *.jsp
 *.log
 *.jmx
+*.json

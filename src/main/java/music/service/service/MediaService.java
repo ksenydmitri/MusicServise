@@ -31,7 +31,7 @@ public class MediaService {
                     new com.google.api.client.http.InputStreamContent(file.getContentType(), fileStream)
             ).setFields("id, webViewLink").execute();
 
-            return uploadedFile.getWebViewLink();
+            return uploadedFile.getId();
         } catch (Exception e) {
             throw new RuntimeException("Ошибка загрузки файла", e);
         }

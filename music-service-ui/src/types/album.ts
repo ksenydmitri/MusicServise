@@ -5,8 +5,6 @@ export interface Album {
     id: number;
     title: string;
     artist: string;
-    year: number;
-    genre: string;
-    coverImage: string;
+    coverImageId?: string;
     tracks: Track[];
 }

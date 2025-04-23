@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class AlbumService {
@@ -25,13 +26,15 @@ public class AlbumService {
     private final AlbumRepository albumRepository;
     private final UserRepository userRepository;
     private final CacheService cacheService;
+    private final MediaService mediaService;
 
     @Autowired
     public AlbumService(AlbumRepository albumRepository,
-                        UserRepository userRepository, CacheService cacheService) {
+                        UserRepository userRepository, CacheService cacheService, MediaService mediaService) {
         this.albumRepository = albumRepository;
         this.userRepository = userRepository;
         this.cacheService = cacheService;
+        this.mediaService = mediaService;
     }
 
     @Transactional
@@ -86,6 +89,7 @@ public class AlbumService {
         response.setTracks(album.getTracks().stream()
                 .map(Track::getTitle)
                 .collect(Collectors.toList()));
+        response.setCoverImageId(album.getCoverImageId());
         return response;
     }
 
@@ -107,21 +111,23 @@ public class AlbumService {
 
 
     @Transactional
-    public AlbumResponse addAlbum(CreateAlbumRequest request) {
-        // Проверяем, что запрос валиден
+    public AlbumResponse addAlbum(CreateAlbumRequest request, MultipartFile coverFile) {
         if (request == null || request.getName() == null ||
                 request.getName().isEmpty() || request.getUserId() == null) {
             throw new IllegalArgumentException("Invalid album creation request");
         }
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("" +
-                        "User not found with ID: " + request.getUserId()));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getUserId()));
 
         Album album = new Album();
+        String coverImageId;
+        if (coverFile != null && !coverFile.isEmpty()) {
+            coverImageId = mediaService.uploadMedia(coverFile);
+            album.setCoverImageId(coverImageId);
+        }
         album.setTitle(request.getName());
         album.getUsers().add(user);
-
         Album savedAlbum = albumRepository.save(album);
         cacheService.evictByPattern("albums_*");
 
@@ -134,13 +140,14 @@ public class AlbumService {
     }
 
     @Transactional
-    public AlbumResponse updateAlbum(Long albumId, UpdateAlbumRequest request) {
+    public AlbumResponse updateAlbum(Long albumId, UpdateAlbumRequest request, MultipartFile coverFile) {
         Album album = albumRepository.findById(albumId)
                 .orElseThrow(() -> new ResourceNotFoundException("Album not found"));
 
         if (request.getName() != null) {
             album.setTitle(request.getName());
         }
+
         if (request.getUserId() != null) {
             User user = userRepository.findById(request.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -148,23 +155,24 @@ public class AlbumService {
                 album.getUsers().add(user);
             }
         }
+        if (coverFile != null && !coverFile.isEmpty()) {
+            String newCoverImageId = mediaService.uploadMedia(coverFile);
+            album.setCoverImageId(newCoverImageId);
+        }
         Album savedAlbum = albumRepository.save(album);
-
         clearCacheForAlbum(albumId);
         evictAllAlbumCaches();
-
         return mapToAlbumResponse(savedAlbum);
     }
+
 
     @Transactional
     public void deleteAlbum(Long albumId) {
         Album album = getAlbumById(albumId);
-
         for (User user : album.getUsers()) {
             album.getUsers().remove(user);
         }
         albumRepository.deleteById(albumId);
-
         clearCacheForAlbum(albumId);
     }
 

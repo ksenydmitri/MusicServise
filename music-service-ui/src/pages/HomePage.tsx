@@ -12,10 +12,9 @@ const HomePage = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Метод для загрузки треков с использованием AbortController
     const fetchTracks = async (page: number, term: string, signal: AbortSignal) => {
         setLoading(true);
-        setErrorMessage(null); // Очистка предыдущих сообщений об ошибке
+        setErrorMessage(null);
         try {
             const response = await trackApi.getTracks({page, term, signal, title: searchTerm });
             console.log('Ответ сервера:', response.data);

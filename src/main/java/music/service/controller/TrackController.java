@@ -71,32 +71,17 @@ public class TrackController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(
-            summary = "Добавить новый трек",
-            description = "Создает новый трек",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "201",
-                            description = "Трек успешно создан",
-                            content = @Content(schema = @Schema(implementation = TrackResponse.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "Некорректные данные"
-                    )
-            }
-    )
+    @Operation(summary = "Добавить новый трек")
     public ResponseEntity<TrackResponse> addTrack(
-            @RequestBody @Valid CreateTrackRequest request,
-            @RequestPart MultipartFile mediaFile) {
+            @RequestPart("request") @Valid CreateTrackRequest request,
+            @RequestPart("mediaFile") MultipartFile mediaFile) {
         try {
-            trackService.validateTrackFile(mediaFile);
-            TrackResponse response = trackService.addTrackWithMedia(request,mediaFile);
+            TrackResponse response = trackService.addTrackWithMedia(request, mediaFile);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (ValidationException e) {
             throw new ValidationException(e.getMessage());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Ошибка загрузки файла", e);
         }
     }
 
@@ -119,14 +104,19 @@ public class TrackController {
             }
     )
     public ResponseEntity<List<TrackResponse>> addTracksBulk(
-            @ModelAttribute @Valid List<CreateTrackRequest> requests) {
+            @RequestPart("requests") @Valid List<CreateTrackRequest> requests,
+            @RequestPart("mediaFiles") List<MultipartFile> mediaFiles) {
         try {
-            List<TrackResponse> responses = trackService.addTracksBulk(requests);
+            if (requests.size() != mediaFiles.size()) {
+                throw new ValidationException("Количество треков и файлов не совпадает");
+            }
+            List<TrackResponse> responses = trackService.addTracksBulk(requests, mediaFiles);
             return ResponseEntity.status(HttpStatus.CREATED).body(responses);
         } catch (ValidationException e) {
             throw new ValidationException(e.getMessage());
         }
     }
+
 
     @PatchMapping("/{id}")
     @Operation(
@@ -170,5 +160,4 @@ public class TrackController {
         trackService.deleteTrack(id);
         return ResponseEntity.noContent().build();
     }
-
 }

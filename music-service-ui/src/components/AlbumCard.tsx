@@ -10,7 +10,7 @@ const AlbumCard = ({ album }: AlbumCardProps) => {
     return (
         <div className="album-card">
             <Link to={`/album/${album.id}`}>
-                <img src={album.coverImage} alt={album.title} />
+                <img src={album.coverImageId} alt={album.title} />
                 <h3>{album.title}</h3>
                 <p>{album.artist}</p>
             </Link>

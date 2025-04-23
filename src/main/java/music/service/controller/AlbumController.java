@@ -14,8 +14,10 @@ import music.service.model.Album;
 import music.service.service.AlbumService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/albums")
@@ -66,36 +68,50 @@ public class AlbumController {
         return ResponseEntity.ok(albumService.mapToAlbumResponse(album));
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
-            summary = "Создать новый альбом",
+            summary = "Добавить новый альбом",
+            description = "Создает новый альбом с обложкой",
             responses = {
-                @ApiResponse(responseCode = "201", description = "Альбом создан"),
-                @ApiResponse(responseCode = "400", description = "Некорректные данные")
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Альбом успешно создан",
+                            content = @Content(schema = @Schema(implementation = AlbumResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Некорректные данные"
+                    )
             }
     )
     public ResponseEntity<AlbumResponse> addAlbum(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Данные для создания альбома",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = CreateAlbumRequest.class)))
-            @Valid @RequestBody CreateAlbumRequest request) {
-        AlbumResponse response = albumService.addAlbum(request);
+            @RequestPart @Valid CreateAlbumRequest request,
+            @RequestPart(required = false) MultipartFile coverFile) {
+        AlbumResponse response = albumService.addAlbum(request, coverFile);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Обновить альбом",
+            description = "Обновляет данные альбома и/или его обложку",
             responses = {
-                @ApiResponse(responseCode = "200", description = "Альбом обновлен"),
-                @ApiResponse(responseCode = "404", description = "Альбом не найден")
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Альбом успешно обновлен",
+                            content = @Content(schema = @Schema(implementation = AlbumResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Альбом не найден"
+                    )
             }
     )
-    public ResponseEntity<AlbumResponse> patchAlbum(
-            @Parameter(description = "ID альбома", required = true) @PathVariable Long id,
-            @RequestBody UpdateAlbumRequest request) {
-        AlbumResponse response = albumService.updateAlbum(id, request);
+    public ResponseEntity<AlbumResponse> updateAlbum(
+            @PathVariable Long id,
+            @RequestPart UpdateAlbumRequest request,
+            @RequestPart(required = false) MultipartFile coverFile) {
+        AlbumResponse response = albumService.updateAlbum(id, request, coverFile);
         return ResponseEntity.ok(response);
     }
 
