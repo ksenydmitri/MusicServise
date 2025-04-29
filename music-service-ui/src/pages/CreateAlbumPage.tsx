@@ -1,22 +1,49 @@
-import React, { useState} from 'react';
-import {albumApi} from '../api/api';
+import React, { useState, useEffect } from 'react';
+import { albumApi, userApi } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './styles/createalbum.css';
+import { Chip, Autocomplete, TextField } from '@mui/material';
+
+interface UserOption {
+    id: number;
+    name: string;
+}
 
 const CreateAlbumPage = () => {
-    const {user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        title: '',
-        coverImage: null as File | null
+        name: '',
+        coverImage: null as File | null,
+        collaborators: [] as string[]
     });
 
+
+    const [userOptions, setUserOptions] = useState<UserOption[]>([]);
+    const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+
+    useEffect(() => {
+        const loadUsers = async () => {
+            try {
+                const response = await userApi.getUsers();
+                setUserOptions(response.data.map((user: { id: number; username: string }) => ({
+                    id: user.id,
+                    name: user.username
+                })));
+
+            } catch (error) {
+                console.error('Ошибка загрузки пользователей:', error);
+            }
+        };
+        loadUsers();
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -36,10 +63,18 @@ const CreateAlbumPage = () => {
         }
     };
 
+    const handleUserSelect = (event: React.SyntheticEvent, newValue: UserOption[]) => {
+        setSelectedUsers(newValue);
+        setFormData(prev => ({
+            ...prev,
+            collaborators: newValue.map(u => u.name)  // Используем name (username)
+        }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!isAuthenticated) {
+        if (!isAuthenticated || !user) {
             setErrorMessage('Требуется авторизация');
             return;
         }
@@ -48,22 +83,21 @@ const CreateAlbumPage = () => {
         setSuccessMessage(null);
         setErrorMessage(null);
 
-        if (!user) return <div>Пожалуйста, войдите в систему</div>;
-
         try {
             const formDataToSend = new FormData();
 
             const requestData = {
-                name: formData.title,
-                userId: user?.id,
+                name: formData.name,
+                userId: user.id,
+                collaborators: formData.collaborators
             };
+            console.log('Отправляемые данные:', requestData);
 
             formDataToSend.append(
                 'request',
                 new Blob([JSON.stringify(requestData)], {
-                    type: 'application/json; charset=UTF-8'
-                }),
-                'request.json'
+                    type: 'application/json'
+                })
             );
 
             if (formData.coverImage) {
@@ -73,7 +107,8 @@ const CreateAlbumPage = () => {
             const response = await albumApi.createAlbum(formDataToSend);
 
             setSuccessMessage('Альбом успешно создан!');
-            setFormData({ title: '', coverImage: null });
+            setFormData({ name: '', coverImage: null, collaborators: [] });
+            setSelectedUsers([]);
             setPreviewImage(null);
             navigate(`/album/${response.data.id}`);
         } catch (error: any) {
@@ -91,8 +126,8 @@ const CreateAlbumPage = () => {
                     <label>Название альбома:</label>
                     <input
                         type="text"
-                        name="title"
-                        value={formData.title}
+                        name="name"
+                        value={formData.name}
                         onChange={handleChange}
                         required
                     />
@@ -110,6 +145,32 @@ const CreateAlbumPage = () => {
                             <img src={previewImage} alt="Предпросмотр обложки" />
                         </div>
                     )}
+                </div>
+
+                <div className="form-group">
+                    <label>Соавторы (могут редактировать альбом):</label>
+                    <Autocomplete
+                        multiple
+                        options={userOptions}
+                        getOptionLabel={(option) => option.name}
+                        value={selectedUsers}
+                        onChange={handleUserSelect}
+                        filterSelectedOptions
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                placeholder="Добавьте пользователей"
+                            />
+                        )}
+                        renderTags={(value, getTagProps) =>
+                            value.map((option, index) => (
+                                <Chip
+                                    label={option.name}
+                                    {...getTagProps({ index })}
+                                />
+                            ))
+                        }
+                    />
                 </div>
 
                 <button type="submit" disabled={loading}>

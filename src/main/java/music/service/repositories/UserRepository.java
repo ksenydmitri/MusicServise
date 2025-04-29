@@ -1,5 +1,6 @@
 package music.service.repositories;
 
+import java.util.List;
 import java.util.Optional;
 import music.service.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,4 +22,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
                           String email);
 
     Optional<? extends User> findByEmail(String username);
+
+    List<User> findByUsernameIn(List<String> usernames);
 }

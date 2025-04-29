@@ -5,6 +5,8 @@ import javax.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class CreateAlbumRequest {
@@ -14,7 +16,6 @@ public class CreateAlbumRequest {
     @NotNull(message = "User ID is required")
     private Long userId;
 
-    private Long trackId;
-
+    private List<String> Collaborators;
 
 }

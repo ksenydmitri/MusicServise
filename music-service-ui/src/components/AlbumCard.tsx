@@ -4,6 +4,8 @@ import './styles/albumCard.css';
 import { useState, useCallback, useEffect } from "react";
 import defaultAvatar from "../cover_image.jpg";
 import { mediaApi } from "../api/api";
+import { Card, CardMedia, CardContent, Typography, IconButton } from '@mui/material';
+import { Add } from '@mui/icons-material';
 
 interface AlbumCardProps {
     album: Album;
@@ -33,32 +35,46 @@ const AlbumCard = ({ album, onAddTrack }: AlbumCardProps) => {
             console.error('Ошибка загрузки обложки:', error);
             setAlbumCoverUrl(defaultAvatar);
         }
-
     }, [album.coverImageId]);
 
     return (
-        <div className="album-card">
-            <div className="album-content">
-                <Link to={`/album/${album.id}`} className="album-link">
-                    <img
-                        src={albumCoverUrl}
-                        alt={album.title}
-                        className="album-cover"
-                    />
-                    <div className="album-info">
-                        <h3 className="album-title">{album.title}</h3>
-                        <p className="album-artist">{album.artists.join(', ')}</p>
-                    </div>
-                </Link>
-                <button
+        <Card className="album-card" sx={{ maxWidth: 250, position: 'relative' }}>
+            <Link to={`/album/${album.id}`} className="album-link">
+                <CardMedia
+                    component="img"
+                    height="200"
+                    image={albumCoverUrl}
+                    alt={album.title}
+                    sx={{ objectFit: 'cover' }}
+                />
+                <CardContent>
+                    <Typography gutterBottom variant="h6" component="div" noWrap>
+                        {album.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        {album.artists.join(', ')}
+                    </Typography>
+                </CardContent>
+            </Link>
+            {onAddTrack && (
+                <IconButton
+                    aria-label="add track"
                     onClick={onAddTrack}
-                    className="add-track-button"
-                    aria-label="Добавить трек"
+                    sx={{
+                        position: 'absolute',
+                        bottom: 16,
+                        right: 16,
+                        backgroundColor: 'primary.main',
+                        color: 'white',
+                        '&:hover': {
+                            backgroundColor: 'primary.dark'
+                        }
+                    }}
                 >
-                    +
-                </button>
-            </div>
-        </div>
+                    <Add />
+                </IconButton>
+            )}
+        </Card>
     );
 };
 

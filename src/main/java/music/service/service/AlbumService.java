@@ -1,5 +1,6 @@
 package music.service.service;
 
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import music.service.config.CacheConfig;
@@ -112,25 +113,51 @@ public class AlbumService {
 
     @Transactional
     public AlbumResponse addAlbum(CreateAlbumRequest request, MultipartFile coverFile) {
+        // Валидация входных данных
         if (request == null || request.getName() == null ||
                 request.getName().isEmpty() || request.getUserId() == null) {
             throw new IllegalArgumentException("Invalid album creation request");
         }
 
-        User user = userRepository.findById(request.getUserId())
+        // Получаем владельца альбома
+        User owner = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getUserId()));
 
+        // Создаем новый альбом
         Album album = new Album();
-        String coverImageId;
+        album.setTitle(request.getName());
+        album.getUsers().add(owner);
+
+        // Обработка соавторов
+        if (request.getCollaborators() != null && !request.getCollaborators().isEmpty()) {
+            // Оптимизированная загрузка всех соавторов одним запросом
+            List<User> collaborators = userRepository.findByUsernameIn(request.getCollaborators());
+
+            // Проверяем, всех ли нашли
+            if (collaborators.size() != request.getCollaborators().size()) {
+                List<String> foundUsernames = collaborators.stream()
+                        .map(User::getUsername)
+                        .collect(Collectors.toList());
+
+                List<String> notFound = request.getCollaborators().stream()
+                        .filter(username -> !foundUsernames.contains(username))
+                        .collect(Collectors.toList());
+
+                throw new ResourceNotFoundException("Users not found: " + String.join(", ", notFound));
+            }
+
+            // Добавляем всех соавторов
+            album.getUsers().addAll(collaborators);
+        }
+
+        // Загрузка обложки
         if (coverFile != null && !coverFile.isEmpty()) {
-            coverImageId = mediaService.uploadMedia(coverFile);
+            String coverImageId = mediaService.uploadMedia(coverFile);
             album.setCoverImageId(coverImageId);
         }
-        album.setTitle(request.getName());
-        album.getUsers().add(user);
+
         Album savedAlbum = albumRepository.save(album);
         cacheService.evictByPattern("albums_*");
-
         return mapToAlbumResponse(savedAlbum);
     }
 
