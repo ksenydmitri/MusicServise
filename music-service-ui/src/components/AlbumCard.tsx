@@ -7,12 +7,11 @@ import { mediaApi } from "../api/api";
 
 interface AlbumCardProps {
     album: Album;
-    onAddTrack?: () => void; // Колбэк для добавления трека
+    onAddTrack?: () => void;
 }
 
 const AlbumCard = ({ album, onAddTrack }: AlbumCardProps) => {
     const [albumCoverUrl, setAlbumCoverUrl] = useState<string>(defaultAvatar);
-    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         fetchCover();
@@ -24,7 +23,6 @@ const AlbumCard = ({ album, onAddTrack }: AlbumCardProps) => {
             return;
         }
 
-        setIsLoading(true);
         try {
             const response = await mediaApi.downloadMedia(album.coverImageId);
             const contentType = response.headers['content-type'] || 'image/jpeg';
@@ -34,14 +32,9 @@ const AlbumCard = ({ album, onAddTrack }: AlbumCardProps) => {
         } catch (error) {
             console.error('Ошибка загрузки обложки:', error);
             setAlbumCoverUrl(defaultAvatar);
-        } finally {
-            setIsLoading(false);
         }
+
     }, [album.coverImageId]);
-
-    const handleAddTrack = async () => {
-
-    }
 
     return (
         <div className="album-card">
@@ -54,7 +47,7 @@ const AlbumCard = ({ album, onAddTrack }: AlbumCardProps) => {
                     />
                     <div className="album-info">
                         <h3 className="album-title">{album.title}</h3>
-                        <p className="album-artist">{album.artist}</p>
+                        <p className="album-artist">{album.artists.join(', ')}</p>
                     </div>
                 </Link>
                 <button

@@ -21,7 +21,6 @@ const RegisterPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Базовая валидация на клиенте
         if (!formData.username || !formData.password || !formData.email) {
             setErrorMessage("Все поля обязательны для заполнения!");
             return;
@@ -31,15 +30,16 @@ const RegisterPage = () => {
         setErrorMessage(null); // Очистка предыдущих сообщений об ошибке
 
         try {
-            // Отправка данных на сервер
-            const response = await authApi.register(
-                formData.username, formData.email,formData.password
-            );
+            const response = await authApi.register({
+                username: formData.username,
+                email: formData.email,
+                password: formData.password
+            });
 
             if (response.data.token) {
-                localStorage.setItem('token', response.data.token); // Сохранение токена
-                login(response.data.user, response.data.token); // Обновление состояния авторизации
-                navigate('/'); // Перенаправление на главную страницу
+                localStorage.setItem('token', response.data.token);
+                login(response.data.user, response.data.token);
+                navigate('/');
             } else {
                 setErrorMessage('Не удалось получить токен. Попробуйте снова.');
             }

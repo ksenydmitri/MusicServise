@@ -1,20 +1,17 @@
-import React, { useState, useContext } from 'react';
-import {albumApi, authApi} from '../api/api';
+import React, { useState} from 'react';
+import {albumApi} from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './styles/createalbum.css';
-import {userInfo} from "node:os";
 
 const CreateAlbumPage = () => {
-    const { isAuthenticated } = useAuth();
+    const {user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         title: '',
         coverImage: null as File | null
     });
-
-    const { user} = useAuth();
 
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);

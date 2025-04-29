@@ -8,11 +8,13 @@ import AlbumPage from './pages/AlbumPage';
 import CreateAlbumPage from './pages/CreateAlbumPage';
 import UserInfoPage from './pages/UserInfoPage';
 import AlbumsPage from "./pages/AlbumsPage";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
     return (
+        <BrowserRouter>
         <AuthProvider>
-            <BrowserRouter>
+            <ErrorBoundary>
                 <Navbar />
                 <div className="container">
                     <Routes>
@@ -25,8 +27,10 @@ function App() {
                         <Route path="/albums" element={<AlbumsPage />} />
                     </Routes>
                 </div>
-            </BrowserRouter>
+
+            </ErrorBoundary>
         </AuthProvider>
+        </BrowserRouter>
     );
 }
 

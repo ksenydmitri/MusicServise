@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { userApi } from '../api/api';
+import { authApi, userApi } from '../api/api';
 import './styles/userinfo.css';
 
 interface Album {
     id: number;
     title: string;
-    // добавьте другие поля альбома по необходимости
+    // Add other album fields if necessary
 }
 
 interface UserData {
@@ -33,11 +33,18 @@ const UserInfoPage = () => {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+    // Retrieve token (assuming it's stored in localStorage for simplicity)
+    const token = localStorage.getItem('token');
+
     useEffect(() => {
         const fetchUser = async () => {
             setLoading(true);
             try {
-                const response = await userApi.getCurrentUser();
+                if (!token) {
+                    throw new Error('Токен не найден');
+                }
+
+                const response = await authApi.getCurrentUser(token);
 
                 if (!response.data) {
                     throw new Error('Пустой ответ от сервера');
@@ -48,16 +55,15 @@ const UserInfoPage = () => {
                     username: response.data.username || '',
                     email: response.data.email || '',
                     role: response.data.role || 'USER',
-                    albums: response.data.albums || []
+                    albums: response.data.albums || [],
                 };
 
                 setUser(userData);
                 setFormData({
                     username: userData.username,
                     email: userData.email,
-                    password: ''
+                    password: '', // Password remains unset for security
                 });
-
             } catch (error: any) {
                 console.error('Ошибка получения данных:', error);
                 setErrorMessage(error.message || 'Ошибка загрузки данных');
@@ -67,7 +73,7 @@ const UserInfoPage = () => {
         };
 
         fetchUser();
-    }, []);
+    }, [token]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -84,9 +90,21 @@ const UserInfoPage = () => {
         setSuccessMessage(null);
 
         try {
-            await userApi.updateUser(user.id, formData);
-            // Обновляем данные пользователя после успешного обновления
-            const updatedUser = await userApi.getCurrentUser();
+            if (!token) {
+                throw new Error('Токен не найден');
+            }
+
+            const dataToUpdate: Record<string, string> = {
+                username: formData.username,
+                email: formData.email,
+            };
+
+            if (formData.password) {
+                dataToUpdate.password = formData.password;
+            }
+
+            await userApi.updateUser(user.id, dataToUpdate, token); // Pass token for authorization
+            const updatedUser = await authApi.getCurrentUser(token); // Fetch updated data with token
             setUser(updatedUser.data);
             setSuccessMessage('Данные пользователя успешно обновлены');
         } catch (error: any) {
@@ -95,6 +113,7 @@ const UserInfoPage = () => {
             setLoading(false);
         }
     };
+
 
     return (
         <div className="user-info-page">
@@ -128,7 +147,7 @@ const UserInfoPage = () => {
                     <div className="albums-section">
                         <h3>Альбомы пользователя</h3>
                         <ul className="albums-list">
-                            {user.albums.map(album => (
+                            {user.albums.map((album) => (
                                 <li key={album.id} className="album-item">
                                     {album.title}
                                 </li>

@@ -29,11 +29,30 @@ api.interceptors.response.use(
     }
 );
 
-export const authApi = {
-    login: (username: string, password: string) =>
-        api.post('/auth/login', { username, password }),
-    register: (username: string, email: string, password: string) =>
-        api.post('/auth/register', { username, email, password }),
+export const userApi = {
+    getCurrentUser: (token: string) =>
+        api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } }),
+
+    getUsers: () =>
+        api.get('/users'),
+
+    getUser: (id: number) =>
+        api.get(`/users/${id}`),
+
+    searchUser: (query: string) =>
+        api.get('/users/search', { params: { query } }),
+
+    createUser: (data: { username: string; email: string; password: string; role?: string }) =>
+        api.post('/users', data),
+
+    updateUser: (id: number, data: { username?: string; email?: string; password?: string; role?: string }, token: string) =>
+        api.patch(`/users/${id}`, data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }),
+    deleteUser: (id: number) =>
+        api.delete(`/users/${id}`)
 };
 
 export const albumApi = {
@@ -54,7 +73,11 @@ export const albumApi = {
 export const trackApi = {
     getTracks: (params: any) => api.get('/tracks', { params }),
     getTrack: (id: number) => api.get(`/tracks/${id}`),
-    createTrack: (data: any) => api.post('/tracks', data),
+    createTrack: (formData: FormData) => api.post('/tracks', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    }),
     createTracksBulk: (data: any[]) => api.post('/tracks/bulk', data),
     updateTrack: (id: number, data: any) => api.patch(`/tracks/${id}`, data),
     deleteTrack: (id: number) => api.delete(`/tracks/${id}`),
@@ -63,6 +86,13 @@ export const trackApi = {
 
 export const mediaApi = {
     downloadMedia: (mediaFileId: string) => api.get(`/media/download/${mediaFileId}`, { responseType: 'blob' }),
+    uploadMedia: (formData: FormData) => {
+        return api.post('/media/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+    },
 };
 
 export const playlistApi = {
@@ -73,12 +103,13 @@ export const playlistApi = {
     deletePlaylist: (id: number) => api.delete(`/playlists/${id}`),
 };
 
-export const userApi = {
-    getCurrentUser: () => api.get('/auth/me'),
-    getUsers: () => api.get('/users'),
-    getUser: (id: number) => api.get(`/users/${id}`),
-    searchUser: (query: string) => api.get('/users/search', { params: { query } }),
-    createUser: (data: any) => api.post('/users', data),
-    updateUser: (id: number, data: any) => api.patch(`/users/${id}`, data),
-    deleteUser: (id: number) => api.delete(`/users/${id}`),
+export const authApi = {
+    login: (username: string, password: string) =>
+        api.post('/auth/login', { username, password }),
+
+    register: (data: { username: string; email: string; password: string; role?: string }) =>
+        api.post('/auth/register', data),
+
+    getCurrentUser: (token: string) =>
+        api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
 };

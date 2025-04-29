@@ -1,39 +1,45 @@
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { albumApi, mediaApi } from '../api/api';
-import TrackList from '../components/TrackList';
 import { Album } from '../types/album';
+import { albumApi, mediaApi } from '../api/api';
 import './styles/albumPage.css';
-import AddTracksForm from '../components/AddTrackForm';
+import TrackList from '../components/TrackList';
 import defaultAvatar from '../cover_image.jpg';
+import AddTrackForm from "../components/AddTrackForm";
 
 const AlbumPage = () => {
-    const { id } = useParams<{ id: number }>();
-    const [album, setAlbum] = useState<Album | null>(null); // Album data
-    const [albumCoverUrl, setAlbumCoverUrl] = useState<string>(defaultAvatar); // Media URL
-    const [isCoverLoading, setIsCoverLoading] = useState<boolean>(true); // Media loading state
-    const [isAlbumLoading, setIsAlbumLoading] = useState<boolean>(true); // Album loading state
+    const { id } = useParams<{ id: string }>();
+    const [album, setAlbum] = useState<Album | null>(null);
+    const [albumCoverUrl, setAlbumCoverUrl] = useState<string>(defaultAvatar);
+    const [isLoadingAlbum, setIsLoadingAlbum] = useState<boolean>(false);
+    const [showModal, setShowModal] = useState(false);
+    const [refreshTracks, setRefreshTracks] = useState<boolean>(false);
 
-    // Function to fetch album data
+    const numericId = Number(id);
+
     const fetchAlbum = useCallback(async () => {
-        setIsAlbumLoading(true);
+        setIsLoadingAlbum(true);
         try {
-            const response = await albumApi.getAlbum(id);
-            setAlbum(response.data);
+            const response = await albumApi.getAlbum(numericId);
+            if (response.data) {
+                setAlbum(response.data);
+            } else {
+                console.error('Альбом не найден');
+            }
         } catch (error) {
             console.error('Ошибка загрузки альбома:', error);
+            setAlbum(null);
         } finally {
-            setIsAlbumLoading(false);
+            setIsLoadingAlbum(false);
         }
-    }, [id]);
+    }, [numericId, refreshTracks]);
 
-    // Function to fetch album cover
     const fetchCover = useCallback(async () => {
         if (!album?.coverImageId) {
             setAlbumCoverUrl(defaultAvatar);
-            setIsCoverLoading(false); // Mark loading as complete
             return;
         }
+
         try {
             const response = await mediaApi.downloadMedia(album.coverImageId);
             const contentType = response.headers['content-type'] || 'image/jpeg';
@@ -42,43 +48,67 @@ const AlbumPage = () => {
             setAlbumCoverUrl(url);
         } catch (error) {
             console.error('Ошибка загрузки обложки:', error);
-            setAlbumCoverUrl(defaultAvatar); // Default fallback image
-        } finally {
-            setIsCoverLoading(false); // Mark loading as complete
+            setAlbumCoverUrl(defaultAvatar);
         }
     }, [album?.coverImageId]);
 
-    // Fetch album data and cover on component mount
     useEffect(() => {
         fetchAlbum();
     }, [fetchAlbum]);
 
-    // Fetch album cover when album data changes
     useEffect(() => {
         if (album) {
             fetchCover();
         }
     }, [album, fetchCover]);
 
-    // Render loading states or album details
-    if (isAlbumLoading) return <div>Загрузка данных альбома...</div>;
+    const toggleModal = () => {
+        setShowModal((prev) => !prev);
+    };
+
+    const handleTrackAdded = () => {
+        setRefreshTracks(prev => !prev);
+        toggleModal();
+    };
+
+    if (isLoadingAlbum) {
+        return <div>Загрузка альбома...</div>;
+    }
+
+    if (!album) {
+        return <div>Альбом не найден</div>;
+    }
 
     return (
         <div className="album-page">
-            {album ? (
-                <>
-                    <h1>{album.title}</h1>
-                    <img
-                        src={albumCoverUrl}
-                        alt={album.title}
-                        className={`album-cover ${isCoverLoading ? 'loading' : ''}`}
-                    />
-                    <TrackList tracks={album.tracks} />
-                    <AddTracksForm albumId={album.id} onAddTrack={() => console.log('Трек успешно добавлен!')} />
-                </>
-            ) : (
-                <div>Альбом не найден</div>
-            )}
+            <div className="album-info">
+                <h1 className="album-title">{album.title}</h1>
+                <p className="album-authors">
+                    <strong>Авторы:</strong> {album.artists.join(', ')}
+                </p>
+                <div className="track-list">
+                    <TrackList tracks={album.tracks}/>
+                    <button onClick={toggleModal} className="custom-button">
+                        Добавить трек
+                    </button>
+                    {showModal && (
+                        <AddTrackForm
+                            albumId={album.id}
+                            onClose={() => setShowModal(false)}
+                            onSuccess={() => {
+                                setShowModal(false);
+                            }}
+                        />
+                    )}
+                </div>
+            </div>
+            <div className="album-cover-container">
+                <img
+                    src={albumCoverUrl}
+                    alt={`Обложка альбома ${album.title}`}
+                    className="album-cover"
+                />
+            </div>
         </div>
     );
 };

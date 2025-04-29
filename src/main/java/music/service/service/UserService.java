@@ -1,40 +1,81 @@
 package music.service.service;
 
 import java.util.List;
+import java.util.Optional;
 import javax.transaction.Transactional;
-import music.service.dto.AlbumResponse;
-import music.service.dto.CreateUserRequest;
-import music.service.dto.UpdateUserRequest;
-import music.service.dto.UserResponse;
-import music.service.model.*;
-import music.service.repositories.AlbumRepository;
-import music.service.repositories.TrackRepository;
-import music.service.repositories.UserRepository;
+
+import music.service.dto.*;
+import music.service.model.Album;
+import music.service.model.Track;
+import music.service.model.User;
+import music.service.repositories.*;
+import music.service.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
+
     private static final String USER_NOT_FOUND = "User not found";
+
     private final UserRepository userRepository;
     private final AlbumRepository albumRepository;
     private final TrackRepository trackRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Autowired
-    public UserService(UserRepository userRepository, AlbumService albumService,
-                       AlbumRepository albumRepository, TrackRepository trackRepository) {
+    public UserService(UserRepository userRepository,
+                       AlbumRepository albumRepository,
+                       TrackRepository trackRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.albumRepository = albumRepository;
-        this.trackRepository  = trackRepository;
+        this.trackRepository = trackRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
-    public User createUser(CreateUserRequest request) {
+    // User creation with password encoding
+    public User createAndEncodeUser(CreateUserRequest request) {
         User user = new User();
         user.setUsername(request.getUsername());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEmail(request.getEmail());
-        user.setRole(request.getRole());
+        user.setRole(request.getRole() == null ? "USER" : request.getRole());
         return userRepository.save(user);
+    }
+
+    // Check if a username exists
+    public boolean usernameExists(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    // Check if an email exists
+    public boolean emailExists(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    // Generate token for a username
+    public String generateToken(String username) {
+        return jwtUtil.generateToken(username);
+    }
+
+    // Extract username from a token
+    public String extractUsernameFromToken(String token) {
+        try {
+            String cleanToken = token.replace("Bearer ", "");
+            return jwtUtil.extractUsername(cleanToken);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to extract username from token", e);
+        }
+    }
+
+    // Verify password
+    public boolean checkPassword(String rawPassword, String encodedPassword) {
+        return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 
     public User getUserById(Long id) {
@@ -57,13 +98,18 @@ public class UserService {
             user.setEmail(request.getEmail());
         }
         if (request.getPassword() != null) {
-            user.setPassword(request.getPassword());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
         if (request.getRole() != null) {
             user.setRole(request.getRole());
         }
         User updatedUser = userRepository.save(user);
         return mapToUserResponse(updatedUser);
+    }
+
+    public Optional<User> findByUsernameOrEmailForAuth(String query) {
+        return userRepository.findByUsername(query)
+                .or(() -> userRepository.findByEmail(query));
     }
 
     public UserResponse mapToUserResponse(User user) {
@@ -75,9 +121,8 @@ public class UserService {
         return response;
     }
 
-
-    public UserResponse findByUsernameOrEmail(String query) {
-        User user = userRepository.findByUsernameOrEmail(query, query)
+    public UserResponse getUserDetailsByUsername(String username) {
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
         return mapToUserResponse(user);
     }
@@ -103,5 +148,4 @@ public class UserService {
         }
         userRepository.delete(user);
     }
-
 }
