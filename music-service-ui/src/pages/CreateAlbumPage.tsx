@@ -1,8 +1,9 @@
 import React, { useState, useContext } from 'react';
-import { albumApi } from '../api/api';
+import {albumApi, authApi} from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './styles/createalbum.css';
+import {userInfo} from "node:os";
 
 const CreateAlbumPage = () => {
     const { isAuthenticated } = useAuth();
@@ -12,6 +13,8 @@ const CreateAlbumPage = () => {
         title: '',
         coverImage: null as File | null
     });
+
+    const { user} = useAuth();
 
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -28,7 +31,6 @@ const CreateAlbumPage = () => {
             const file = e.target.files[0];
             setFormData(prev => ({ ...prev, coverImage: file }));
 
-            // Создаем превью для изображения
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPreviewImage(reader.result as string);
@@ -49,18 +51,26 @@ const CreateAlbumPage = () => {
         setSuccessMessage(null);
         setErrorMessage(null);
 
+        if (!user) return <div>Пожалуйста, войдите в систему</div>;
+
         try {
             const formDataToSend = new FormData();
-            const request = {
-                title: formData.title,
+
+            const requestData = {
+                name: formData.title,
+                userId: user?.id,
             };
 
-            formDataToSend.append('request', new Blob([JSON.stringify(request)], {
-                type: 'application/json'
-            }));
+            formDataToSend.append(
+                'request',
+                new Blob([JSON.stringify(requestData)], {
+                    type: 'application/json; charset=UTF-8'
+                }),
+                'request.json'
+            );
 
             if (formData.coverImage) {
-                formDataToSend.append('coverFile', formData.coverImage);
+                formDataToSend.append('file', formData.coverImage);
             }
 
             const response = await albumApi.createAlbum(formDataToSend);

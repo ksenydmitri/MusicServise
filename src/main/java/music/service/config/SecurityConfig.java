@@ -39,6 +39,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/media/**").permitAll()
                 .antMatchers("/albums/**").permitAll()
                 .antMatchers("/albums**").permitAll()
+                .antMatchers("/visits/**").permitAll()
+                .antMatchers("/logs**").permitAll()
+                .antMatchers("/logs/**").permitAll()
+                .antMatchers("/**/**").permitAll()
+                .antMatchers("/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

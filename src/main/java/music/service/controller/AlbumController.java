@@ -85,8 +85,8 @@ public class AlbumController {
             }
     )
     public ResponseEntity<AlbumResponse> addAlbum(
-            @RequestPart @Valid CreateAlbumRequest request,
-            @RequestPart(required = false) MultipartFile coverFile) {
+            @RequestPart(name = "request") @Valid CreateAlbumRequest request,
+            @RequestPart(name = "file",required = false) MultipartFile coverFile) {
         AlbumResponse response = albumService.addAlbum(request, coverFile);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

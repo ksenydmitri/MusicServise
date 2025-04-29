@@ -7,6 +7,7 @@ import RegisterPage from './pages/RegisterPage';
 import AlbumPage from './pages/AlbumPage';
 import CreateAlbumPage from './pages/CreateAlbumPage';
 import UserInfoPage from './pages/UserInfoPage';
+import AlbumsPage from "./pages/AlbumsPage";
 
 function App() {
     return (
@@ -21,6 +22,7 @@ function App() {
                         <Route path="/album/:id" element={<AlbumPage />} />
                         <Route path="/create-album" element={<CreateAlbumPage />} />
                         <Route path="/user-info" element={<UserInfoPage />} />
+                        <Route path="/albums" element={<AlbumsPage />} />
                     </Routes>
                 </div>
             </BrowserRouter>

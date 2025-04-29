@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { AuthRequest } from '../types/auth';
-import './styles/login.css';
 
 const LoginPage = () => {
     const [formData, setFormData] = useState<AuthRequest>({
@@ -25,7 +24,7 @@ const LoginPage = () => {
 
             if (response.data.token) {
                 localStorage.setItem('token', response.data.token);
-                login();
+                login(response.data.user, response.data.token);
                 navigate('/');
             } else {
                 console.error('Токен не получен:', response.data);

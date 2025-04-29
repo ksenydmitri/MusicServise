@@ -13,9 +13,8 @@ const TrackCard = ({ track }: TrackCardProps) => {
     const [audioUrl, setAudioUrl] = useState<string | undefined>();
     const [isLoading, setIsLoading] = useState(false);
 
-    // Улучшенная версия функции загрузки с логированием
     const fetchAlbumCover = useCallback(async () => {
-        if (!track.album?.coverImageId) {
+        if (!track.album.coverImageId) {
             console.log('Обложка альбома отсутствует, используется стандартная аватарка.'+track.album.title);
             setAlbumCoverUrl(defaultAvatar);
             return;
@@ -27,8 +26,6 @@ const TrackCard = ({ track }: TrackCardProps) => {
         try {
             const response = await mediaApi.downloadMedia(track.album.coverImageId);
             console.log('Успешный ответ от API при загрузке обложки:', response);
-
-            // Проверка типа контента
             const contentType = response.headers['content-type'] || 'image/jpeg';
             const blob = new Blob([response.data], { type: contentType });
             const url = URL.createObjectURL(blob);
@@ -41,7 +38,7 @@ const TrackCard = ({ track }: TrackCardProps) => {
         } finally {
             setIsLoading(false);
         }
-    }, [track.album?.coverImageId]);
+    }, [track.album.coverImageId]);
 
     useEffect(() => {
         console.log('Запуск функции fetchAlbumCover...');

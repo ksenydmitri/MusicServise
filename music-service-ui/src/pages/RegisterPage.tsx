@@ -38,7 +38,7 @@ const RegisterPage = () => {
 
             if (response.data.token) {
                 localStorage.setItem('token', response.data.token); // Сохранение токена
-                login(); // Обновление состояния авторизации
+                login(response.data.user, response.data.token); // Обновление состояния авторизации
                 navigate('/'); // Перенаправление на главную страницу
             } else {
                 setErrorMessage('Не удалось получить токен. Попробуйте снова.');

@@ -18,6 +18,17 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+api.interceptors.response.use(
+    response => response,
+    error => {
+        if (error.response && error.response.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
+
 export const authApi = {
     login: (username: string, password: string) =>
         api.post('/auth/login', { username, password }),
@@ -30,10 +41,9 @@ export const albumApi = {
     getAlbumCover: (albumId: number) => api.get(`/albums/${albumId}`),
     getAlbum: (id: number) => api.get(`/albums/${id}`),
     createAlbum: (formData: FormData) => {
-        return axios.post('/albums', formData, {
+        return api.post('/albums', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
     },
