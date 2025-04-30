@@ -1,19 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { authApi, userApi } from '../api/api';
-import './styles/userinfo.css';
-
-interface Album {
-    id: number;
-    title: string;
-    // Add other album fields if necessary
-}
+import './styles/login.css';
+import {Album} from "../types/album";
 
 interface UserData {
     id: number;
     username: string;
     email: string;
     role: string;
-    albums: Album[];
 }
 
 const UserInfoPage = () => {
@@ -22,7 +16,6 @@ const UserInfoPage = () => {
         username: '',
         email: '',
         role: '',
-        albums: [],
     });
     const [formData, setFormData] = useState({
         username: '',
@@ -55,7 +48,6 @@ const UserInfoPage = () => {
                     username: response.data.username || '',
                     email: response.data.email || '',
                     role: response.data.role || 'USER',
-                    albums: response.data.albums || [],
                 };
 
                 setUser(userData);
@@ -116,51 +108,34 @@ const UserInfoPage = () => {
 
 
     return (
-        <div className="user-info-page">
+        <div className="loginContainer">
             <h1>Информация о пользователе</h1>
             {loading && <p>Загрузка данных...</p>}
             {errorMessage && <p className="error-message">{errorMessage}</p>}
             {successMessage && <p className="success-message">{successMessage}</p>}
 
-            <div className="user-info-section">
+            <div className="loginPaper">
                 <h2>Текущие данные</h2>
-                <div className="user-info-grid">
-                    <div className="info-item">
-                        <span className="info-label">ID:</span>
-                        <span className="info-value">{user.id}</span>
+                <div className="info-grid">
+                    <div>
+                        <span>Имя пользователя:</span>
+                        <span>{user.username}</span>
                     </div>
-                    <div className="info-item">
-                        <span className="info-label">Имя пользователя:</span>
-                        <span className="info-value">{user.username}</span>
+                    <div>
+                        <span>Email:</span>
+                        <span>{user.email}</span>
                     </div>
-                    <div className="info-item">
-                        <span className="info-label">Email:</span>
-                        <span className="info-value">{user.email}</span>
-                    </div>
-                    <div className="info-item">
-                        <span className="info-label">Роль:</span>
-                        <span className="info-value">{user.role}</span>
+                    <div>
+                        <span>Роль:</span>
+                        <span>{user.role}</span>
                     </div>
                 </div>
-
-                {user.albums && user.albums.length > 0 && (
-                    <div className="albums-section">
-                        <h3>Альбомы пользователя</h3>
-                        <ul className="albums-list">
-                            {user.albums.map((album) => (
-                                <li key={album.id} className="album-item">
-                                    {album.title}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
             </div>
 
-            <div className="update-form-section">
+            <div className="loginPaper">
                 <h2>Обновить данные</h2>
                 <form onSubmit={handleSubmit}>
-                    <div className="form-group">
+                    <div>
                         <label htmlFor="username">Имя пользователя</label>
                         <input
                             type="text"
@@ -174,7 +149,7 @@ const UserInfoPage = () => {
                         />
                     </div>
 
-                    <div className="form-group">
+                    <div>
                         <label htmlFor="email">Email</label>
                         <input
                             type="email"
@@ -186,8 +161,8 @@ const UserInfoPage = () => {
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label htmlFor="password">Новый пароль (оставьте пустым, чтобы не менять)</label>
+                    <div>
+                        <label htmlFor="password">Новый пароль</label>
                         <input
                             type="password"
                             id="password"
@@ -196,6 +171,7 @@ const UserInfoPage = () => {
                             onChange={handleChange}
                             minLength={6}
                             maxLength={50}
+                            placeholder="Оставьте пустым, чтобы не менять"
                         />
                     </div>
 

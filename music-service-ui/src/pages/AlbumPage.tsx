@@ -3,9 +3,10 @@ import { useParams } from 'react-router-dom';
 import { Album } from '../types/album';
 import { albumApi, mediaApi } from '../api/api';
 import './styles/albumPage.css';
-import TrackList from '../components/TrackList';
 import defaultAvatar from '../cover_image.jpg';
 import AddTrackForm from "../components/AddTrackForm";
+import {Track} from "../types/track";
+import './styles/global.css'
 
 const AlbumPage = () => {
     const { id } = useParams<{ id: string }>();
@@ -72,42 +73,59 @@ const AlbumPage = () => {
     };
 
     if (isLoadingAlbum) {
-        return <div>Загрузка альбома...</div>;
+        return <div className="page-container">Загрузка альбома...</div>;
     }
 
     if (!album) {
-        return <div>Альбом не найден</div>;
+        return <div className="page-container">Альбом не найден</div>;
     }
 
     return (
-        <div className="album-page">
-            <div className="album-info">
-                <h1 className="album-title">{album.title}</h1>
-                <p className="album-authors">
-                    <strong>Авторы:</strong> {album.artists.join(', ')}
-                </p>
-                <div className="track-list">
-                    <TrackList tracks={album.tracks}/>
-                    <button onClick={toggleModal} className="custom-button">
-                        Добавить трек
-                    </button>
-                    {showModal && (
-                        <AddTrackForm
-                            albumId={album.id}
-                            onClose={() => setShowModal(false)}
-                            onSuccess={() => {
-                                setShowModal(false);
-                            }}
+        <div className="page-container">
+            <div className="content-card">
+                <div className="album-page">
+                    <div className="album-info">
+                        <h1 className="album-title">{album.title}</h1>
+                        <p className="album-authors">
+                            <strong>Авторы:</strong> {album.artists.join(', ')}
+                        </p>
+
+                        <button onClick={toggleModal} className="custom-button">
+                            Добавить трек
+                        </button>
+
+                        <div className="track-list-section">
+                            <h3>Треки</h3>
+                            <div className="horizontal-scroll-list">
+                                <div className="horizontal-scroll-container">
+                                    {album.tracks.map((track: Track, index: number) => (
+                                        <div key={track.id} className="track-card">
+                                            <span className="track-number">{index + 1}</span>
+                                            <h4 className="track-title">{track.title}</h4>
+                                            <p className="track-duration">{track.duration}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {showModal && (
+                            <AddTrackForm
+                                albumId={album.id}
+                                onClose={() => setShowModal(false)}
+                                onSuccess={handleTrackAdded}
+                            />
+                        )}
+                    </div>
+
+                    <div className="album-cover-container">
+                        <img
+                            src={albumCoverUrl}
+                            alt={`Обложка альбома ${album.title}`}
+                            className="album-cover"
                         />
-                    )}
+                    </div>
                 </div>
-            </div>
-            <div className="album-cover-container">
-                <img
-                    src={albumCoverUrl}
-                    alt={`Обложка альбома ${album.title}`}
-                    className="album-cover"
-                />
             </div>
         </div>
     );

@@ -4,6 +4,10 @@ import './styles/register.css';
 import { authApi } from '../api/api';
 import { RegisterRequest } from "../types/auth";
 import { useAuth } from "../context/AuthContext";
+import './styles/login.css'
+import Typography from "@mui/material/Typography";
+import Paper from "@mui/material/Paper";
+import TextField from "@mui/material/TextField";
 
 const RegisterPage = () => {
     const [formData, setFormData] = useState<RegisterRequest>({
@@ -57,41 +61,51 @@ const RegisterPage = () => {
     };
 
     return (
-        <div className="register-page">
-            <h1>Регистрация</h1>
-            <form onSubmit={handleSubmit}>
-                <input
-                    type="text"
-                    name="username"
-                    placeholder="Имя пользователя"
-                    value={formData.username}
-                    onChange={handleChange}
-                    required
-                />
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                />
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="Пароль"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                />
-                <button type="submit" disabled={isLoading}>
-                    {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
-                </button>
-            </form>
-            {errorMessage && <p className="error-message">{errorMessage}</p>}
-            <p>
-                Уже есть аккаунт? <Link to="/login">Войдите</Link>
-            </p>
+        <div className="loginContainer">
+            <Paper className="loginPaper" elevation={3}>
+                {errorMessage && (
+                    <Typography >
+                        {errorMessage}
+                    </Typography>
+                )}
+                <h1>Регистрация</h1>
+                <form onSubmit={handleSubmit}  >
+                    <TextField
+                        fullWidth
+                        label="Имя пользователя"
+                        name="username"
+                        variant="outlined"
+                        value={formData.username}
+                        onChange={handleChange}
+                        required
+                    />
+                    <TextField
+                        fullWidth
+                        label="Почта"
+                        name="email"
+                        variant="outlined"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                    />
+                    <TextField
+                        fullWidth
+                        label="Пароль"
+                        name="password"
+                        variant="outlined"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                    />
+                    <button type="submit" disabled={isLoading}>
+                        {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
+                    </button>
+                </form>
+                {errorMessage && <p className="error-message">{errorMessage}</p>}
+                <p>
+                    Уже есть аккаунт? <Link to="/login">Войдите</Link>
+                </p>
+            </Paper>
         </div>
     );
 };

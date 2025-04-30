@@ -1,9 +1,12 @@
-import './styles/home.css';
 import AlbumCard from "../components/AlbumCard";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import { albumApi } from "../api/api";
 import { Album } from "../types/album";
+import { Button } from "@mui/material";
+import CreateAlbumModal from "../components/CreateAlbumForm";
+import "./styles/global.css"
+
 
 const AlbumsPage = () => {
     const { user, isAuthenticated } = useAuth();
@@ -12,8 +15,9 @@ const AlbumsPage = () => {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
+    const [openModal, setOpenModal] = useState<boolean>(false); // Управление модальным окном
 
-    const fetchAlbums = async (page: number, signal?: AbortSignal) => {
+    const fetchAlbums = async (page: number) => {
         if (!isAuthenticated || !user) {
             setErrorMessage("Требуется авторизация");
             setAlbums([]);
@@ -26,7 +30,7 @@ const AlbumsPage = () => {
         try {
             const response = await albumApi.getAlbums({
                 page,
-                user: user.username
+                user: user.username,
             });
 
             if (response.data.content) {
@@ -37,25 +41,19 @@ const AlbumsPage = () => {
                 setAlbums([]);
                 setTotalPages(0);
             }
-        } catch (error: any) {
-            if (!signal?.aborted) {
-                setErrorMessage('Ошибка загрузки альбомов. Попробуйте снова.');
-            }
+        } catch (error) {
+            setErrorMessage("Ошибка загрузки альбомов. Попробуйте снова.");
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        const controller = new AbortController();
-        fetchAlbums(0, controller.signal);
-
-        return () => controller.abort();
-    }, [isAuthenticated, user]); // Добавляем зависимости
+        fetchAlbums(0);
+    }, [isAuthenticated, user]);
 
     const handlePageChange = async (page: number) => {
-        const controller = new AbortController();
-        await fetchAlbums(page, controller.signal);
+        await fetchAlbums(page);
     };
 
     if (!isAuthenticated) {
@@ -63,30 +61,33 @@ const AlbumsPage = () => {
     }
 
     return (
-        <div className="albums-page">
+        <div className="page-container">
+            <div>
+                <Button variant="contained" color="primary" onClick={() => setOpenModal(true)} className="">
+                    Создать альбом
+                </Button>
+            </div>
+
             {loading ? (
                 <p className="loading-indicator">Загрузка...</p>
             ) : errorMessage ? (
                 <p className="error-message">{errorMessage}</p>
             ) : (
                 <>
-                    <div className="album-list">
-                        {albums.map(album => (
-                            <AlbumCard
-                                key={album.id}
-                                album={album}
-                            />
+                    <div>
+                        {albums.map((album) => (
+                            <AlbumCard key={album.id} album={album} />
                         ))}
                     </div>
 
                     {totalPages > 1 && (
-                        <div className="pagination">
+                        <div>
                             {Array.from({ length: totalPages }, (_, index) => (
                                 <button
                                     key={index}
                                     onClick={() => handlePageChange(index)}
                                     disabled={currentPage === index}
-                                    className={`pagination-button ${currentPage === index ? 'active' : ''}`}
+                                    className={`pagination-button ${currentPage === index ? "active" : ""}`}
                                 >
                                     {index + 1}
                                 </button>
@@ -95,6 +96,8 @@ const AlbumsPage = () => {
                     )}
                 </>
             )}
+
+            <CreateAlbumModal open={openModal} handleClose={() => setOpenModal(false)} />
         </div>
     );
 };

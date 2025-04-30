@@ -102,7 +102,12 @@ public class TrackService {
     public Page<Track> getAllTracks(String username, String albumTitle, String title,
                                     String genre, String playlistName, Pageable pageable) {
 
-        String cacheKey = buildTracksCacheKey(username, albumTitle, pageable.getPageNumber(),DEFAULT_SIZE);
+        int page = pageable != null ? pageable.getPageNumber() : DEFAULT_PAGE;
+        int size = pageable != null ? pageable.getPageSize() : DEFAULT_SIZE;
+
+        String cacheKey = buildTracksCacheKey(
+                username, albumTitle, title,
+                genre, playlistName, page, size);
 
         if (cacheService.containsKey(cacheKey)) {
             logger.debug("Cache hit for key: {}", cacheKey);
@@ -282,30 +287,29 @@ public class TrackService {
         }
     }
 
-    private String buildTracksCacheKey(
-            String user, String title, int page, int size) {
-        return String.format("albums_%s_%s_page%d_size_%d",
-                user != null ? user : "all",
+    private String buildTracksCacheKey(String username, String albumTitle, String title,
+                                       String genre, String playlistName, int page, int size) {
+        return String.format("%s:user=%s:album=%s:title=%s:genre=%s:playlist=%s:page=%d:size=%d",
+                TRACKS_CACHE_PREFIX,
+                username != null ? username : "all",
+                albumTitle != null ? albumTitle : "all",
                 title != null ? title : "all",
-                page, size
+                genre != null ? genre : "all",
+                playlistName != null ? playlistName : "all",
+                page,
+                size
         );
     }
-
 
     private void evictTrackCache(Track track) {
-        String user = track.getUsers().isEmpty() ? "unknown_user" : track.getUsers().iterator().next().getUsername();
-        String albumTitle = track.getAlbum() != null ? track.getAlbum().getTitle() : "unknown_album";
-        String cacheKey = buildTracksCacheKey(
-                user, albumTitle, DEFAULT_PAGE, DEFAULT_SIZE
-        );
-        cacheService.evict(cacheKey);
+        cacheService.evictByPattern(TRACKS_CACHE_PREFIX + ":*");
     }
-
 
     private void evictAllTrackCaches() {
-        cacheService.evictByPattern(TRACKS_CACHE_PREFIX + "_*");
-        cacheService.evictByPattern(TRACK_CACHE_PREFIX + "_*");
+        cacheService.evictByPattern(TRACKS_CACHE_PREFIX + ":*");
+        cacheService.evictByPattern(TRACK_CACHE_PREFIX + ":*");
     }
+
 
     private TrackResponse buildTrackResponse(Track track, String mediaFileId) {
         TrackResponse response = mapToTrackResponse(track);

@@ -1,0 +1,250 @@
+/* Общие стили для всех страниц */
+.page-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+    padding: 2rem 1rem;
+    flex-direction: column;
+
+}
+
+/* Стили для карточек контента */
+.page-container .content-card {
+    width: 100%;
+    max-width: 800px;
+    padding: 2.5rem;
+    margin: 1rem 0;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    background-color: white;
+}
+
+/* Стили для заголовков страниц */
+.page-container title {
+    margin-bottom: 2rem;
+    color: #c081f8;
+    font-weight: 600;
+    font-size: 2rem;
+    text-align: center;
+}
+
+/* Стили для форм */
+.page-container .form-container {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    justify-content: center;
+}
+
+/* Стили для полей ввода */
+.page-container form {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    font-size: 1rem;
+    transition: all 0.2s;
+    margin-bottom: 2rem;
+    margin-top: 2rem;
+}
+
+.page-container form:focus {
+    outline: none;
+    border-color: #c081f8;
+    box-shadow: 0 0 0 2px rgba(192, 129, 248, 0.2);
+}
+
+/* Стили для кнопок */
+.page-container button {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(45deg, #c081f8 0%, #a162e8 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    margin: 0.5rem auto;
+}
+
+.page-container .search-form-container {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.search-form-container > *:first-child {
+    width: calc(100% - 20%);
+}
+
+.search-form-container > *:last-child {
+    width: calc(20%);
+}
+
+.search-form-container input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.search-form-container input:focus {
+    outline: none;
+    border-color: #c081f8;
+    box-shadow: 0 0 0 2px rgba(192, 129, 248, 0.2);
+}
+
+.search-form-container button:hover {
+    background: linear-gradient(45deg, #a162e8 0%, #8a4bce 100%);
+}
+
+.page-container .secondary-button {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: #f5f7fa;
+    color: #666;
+    font-weight: 600;
+    border: 1px solid #d1d5db;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.page-container .secondary-button:hover {
+    background: #e4e8f0;
+}
+
+/* Стили для ссылок */
+.page-container link {
+    color: #c081f8;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.page-container link:hover {
+    color: #8a4bce;
+    text-decoration: underline;
+}
+
+/* Стили для сообщений */
+.page-container .error-message {
+    color: #f44336;
+    background: #ffebee;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.page-container .success-message {
+    color: #4caf50;
+    background: #e8f5e9;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+
+.page-container .data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.page-container .data-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border-bottom: 1px solid #eee;
+}
+
+/* Стили для горизонтального списка треков */
+.track-list {
+    width: 100%;
+    overflow-x: auto;
+    padding: 16px 0;
+    margin: 16px 0;
+    white-space: nowrap;
+}
+
+.track-list-container {
+    display: inline-flex;
+    gap: 30px;
+    padding: 0 16px;
+}
+
+/* Стили для карточки трека */
+.track-card {
+    display: inline-block; /* Важно для горизонтального расположения */
+    width: 250px; /* Фиксированная ширина карточки */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    white-space: normal; /* Разрешаем перенос текста внутри карточки */
+    vertical-align: top;
+    background-color: #f9f9f9;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.track-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: scale(1.02);
+}
+/* Общие стили для обоих списков */
+.horizontal-scroll-list {
+    width: 100%;
+    overflow-x: auto;
+    padding: 16px 0;
+    margin: 16px 0;
+    white-space: nowrap;
+}
+
+.horizontal-scroll-container {
+    display: inline-flex;
+    gap: 30px;
+    padding: 0 16px;
+}
+
+/* Специфичные стили для альбомов */
+.album-card {
+    display: inline-block;
+    width: 200px; /* Уже чем треки для визуального различия */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    white-space: normal;
+    background-color: #f5f5f5;
+    transition: transform 0.2s ease;
+}
+
+.album-card:hover {
+    transform: scale(1.03);
+}
+
+.album-cover {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.album-title {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.album-artist {
+    font-size: 0.9em;
+    color: #666;
+}

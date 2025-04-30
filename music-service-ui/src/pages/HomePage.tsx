@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react';
-import { trackApi } from '../api/api';
+import {albumApi, trackApi} from '../api/api';
 import TrackCard from '../components/TrackCard';
 import { Track } from '../types/track';
-import './styles/home.css';
+import { Album } from  '../types/album'
+import './styles/global.css';
+import AlbumCard from "../components/AlbumCard";
+import {Simulate} from "react-dom/test-utils";
+import error = Simulate.error;
 
 const HomePage = () => {
     const [tracks, setTracks] = useState<Track[]>([]);
+    const [albums, setAlbums] = useState<Album[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
 
     const fetchTracks = async (page: number, term: string, signal: AbortSignal) => {
         setLoading(true);
@@ -46,7 +52,6 @@ const HomePage = () => {
                 const response = await trackApi.getTracks({});
                 console.log('Ответ сервера:', response.data);
 
-                // Получаем треки из поля "content"
                 if (response.data.content) {
                     setTracks(response.data.content);
                 } else {
@@ -57,18 +62,31 @@ const HomePage = () => {
                 console.error('Error fetching tracks:', error);
             }
         };
+        const fetchAlbums = async () => {
+            try {
+                const response = await albumApi.getAlbums({});
+                console.log('Ответ сервера:', response.data);
+
+                if (response.data.content) {
+                    setAlbums(response.data.content);
+                } else {
+                    console.error('Поле "content" отсутствует:', response.data);
+                    setAlbums([]);
+                }
+            } catch (error) {
+                console.error('Error fetching tracks:', error);
+            }
+        }
 
         fetchTracks().catch((error) => console.error('Promise Error:', error));
+        fetchAlbums().catch((error) => console.error('Promise Error:', error));
     }, []);
 
-
-    // Обработчик поиска
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const response = await trackApi.getTracks({ title: searchTerm });
 
-            // Получаем треки из поля "content"
             if (response.data.content) {
                 setTracks(response.data.content);
             } else {
@@ -80,26 +98,23 @@ const HomePage = () => {
         }
     };
 
-
-    // Обработчик переключения страницы
     const handlePageChange = async (page: number) => {
         const controller = new AbortController();
         const { signal } = controller;
 
-        await fetchTracks(page, searchTerm, signal); // Загрузка новой страницы с текущим запросом
+        await fetchTracks(page, searchTerm, signal);// Загрузка новой страницы с текущим запросом
     };
 
     return (
-        <div className="home-page">
-            <form onSubmit={handleSearch} className="search-form">
+        <div className="page-container">
+            <form onSubmit={handleSearch} className="search-form-container">
                 <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search tracks..."
-                    className="search-input"
                 />
-                <button type="submit" className="search-button">Search</button>
+                <button type="submit">Search</button>
             </form>
 
             {loading ? (
@@ -107,13 +122,33 @@ const HomePage = () => {
             ) : errorMessage ? (
                 <p className="error-message">{errorMessage}</p>
             ) : (
-                <div className="track-list">
-                    {tracks.length === 0 ? (
-                        <p>No tracks found</p>
-                    ) : (
-                        tracks.map((track) => <TrackCard key={track.id} track={track} />)
-                    )}
-                </div>
+                <>
+                    {/* Список треков */}
+                    <div className="horizontal-scroll-list">
+                        <h3>Popular Tracks</h3>
+                        {tracks.length === 0 ? (
+                            <p>No tracks found</p>
+                        ) : (
+                            <div className="horizontal-scroll-container">
+                                {tracks.map((track) => (
+                                    <TrackCard key={`track-${track.id}`} track={track} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <div className="horizontal-scroll-list">
+                        <h3>Featured Albums</h3>
+                        {albums.length === 0 ? (
+                            <p>No albums found</p>
+                        ) : (
+                            <div className="horizontal-scroll-container">
+                                {albums.map((album) => (
+                                    <AlbumCard key={`album-${album.id}`} album={album} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </>
             )}
 
             <div className="pagination">

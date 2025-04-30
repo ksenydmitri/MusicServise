@@ -1,12 +1,14 @@
-/* Общий стиль для навигации */
+
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background-color: #007bff; /* Синий фон */
+    background-color: #c081f8; /* Синий фон */
     color: white;
     font-family: Arial, sans-serif;
+    height: 50px;
+    min-height: 50px;
 }
 
 /* Ссылки */
@@ -14,7 +16,7 @@
     text-decoration: none;
     color: white;
     margin-right: 15px;
-    font-size: 16px;
+    font-size: 24px;
     transition: color 0.3s;
 }
 
@@ -38,9 +40,8 @@
     background-color: #e0a800; /* Более темный желтый при наведении */
 }
 
-/* Приветствие */
 .navbar span {
     margin-right: 10px;
-    font-size: 16px;
+    font-size: 24px;
     font-weight: bold;
 }

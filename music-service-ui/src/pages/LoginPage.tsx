@@ -3,6 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { AuthRequest } from '../types/auth';
+import './styles/login.css';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
 
 const LoginPage = () => {
     const [formData, setFormData] = useState<AuthRequest>({
@@ -12,10 +17,13 @@ const LoginPage = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMessage(null);
+        setIsLoading(true);
+
         try {
             const response = await authApi.login(
                 formData.username,
@@ -27,17 +35,12 @@ const LoginPage = () => {
                 login(response.data.user, response.data.token);
                 navigate('/');
             } else {
-                console.error('Токен не получен:', response.data);
                 setErrorMessage('Ошибка: Токен не получен от сервера.');
             }
         } catch (error) {
-            if (error instanceof Error) {
-                setErrorMessage((error as any)?.response?.data?.error || 'Ошибка входа.');
-                console.error('Ошибка при входе:', error.message);
-            } else {
-                setErrorMessage('Неизвестная ошибка.');
-                console.error('Неизвестная ошибка:', error);
-            }
+            setErrorMessage('Неверное имя пользователя или пароль');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -45,33 +48,59 @@ const LoginPage = () => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
-// Удаляем токен при выходе
+
     return (
-        <div className="login-page">
-            <h1>Вход</h1>
-            {errorMessage && <p className="error-message">{errorMessage}</p>}
-            <form onSubmit={handleSubmit}>
-                <input
-                    type="text"
-                    name="username"
-                    placeholder="Имя пользователя"
-                    value={formData.username}
-                    onChange={handleChange}
-                    required
-                />
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="Пароль"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                />
-                <button type="submit">Войти</button>
-            </form>
-            <p>
-                Нет аккаунта? <Link to="/register">Зарегистрируйтесь</Link>
-            </p>
+        <div className="loginContainer">
+            <Paper className="loginPaper" elevation={3}>
+                <Typography variant="h5" component="h1">
+                    Вход
+                </Typography>
+
+                {errorMessage && (
+                    <Typography>
+                        {errorMessage}
+                    </Typography>
+                )}
+
+                <form onSubmit={handleSubmit}>
+                    <TextField
+                        fullWidth
+                        label="Имя пользователя"
+                        name="username"
+                        variant="outlined"
+                        value={formData.username}
+                        onChange={handleChange}
+                        required
+                    />
+
+                    <TextField
+                        fullWidth
+                        type="password"
+                        label="Пароль"
+                        name="password"
+                        variant="outlined"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                    />
+
+                    <Button
+                        fullWidth
+                        variant="contained"
+                        type="submit"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'Вход...' : 'Войти'}
+                    </Button>
+                </form>
+
+                <Typography variant="body2" style={{ marginTop: '2rem' }}>
+                    Нет аккаунта?{' '}
+                    <Link to="/register">
+                        Зарегистрируйтесь
+                    </Link>
+                </Typography>
+            </Paper>
         </div>
     );
 };

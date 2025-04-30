@@ -1,0 +1,95 @@
+/* Стили для модального окна */
+.dialog-container .MuiDialog-paper {
+    width: 100%;
+    max-width: 500px;
+    border-radius: 12px;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Заголовок модального окна */
+.dialog-container .MuiDialogTitle-root {
+    color: #c081f8;
+    font-weight: 600;
+    font-size: 1.5rem;
+    text-align: center;
+    padding: 16px 24px;
+}
+
+/* Контентная область */
+.dialog-container .MuiDialogContent-root {
+    padding: 20px 24px;
+}
+
+/* Действия в модальном окне */
+.dialog-container .MuiDialogActions-root {
+    padding: 16px 24px;
+    justify-content: space-between;
+}
+
+/* Текстовые поля */
+.dialog-container .MuiTextField-root {
+    margin-bottom: 16px;
+}
+
+.dialog-container .MuiTextField-root .MuiOutlinedInput-root {
+    border-radius: 8px;
+}
+
+.dialog-container .MuiTextField-root .MuiOutlinedInput-root fieldset {
+    border-color: #d1d5db;
+}
+
+.dialog-container .MuiTextField-root .MuiOutlinedInput-root:hover fieldset {
+    border-color: #c081f8;
+}
+
+.dialog-container .MuiTextField-root .Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #c081f8 !important;
+    box-shadow: 0 0 0 2px rgba(192, 129, 248, 0.2);
+}
+
+/* Кнопки */
+.dialog-container .MuiButton-contained {
+    background: linear-gradient(45deg, #c081f8 0%, #a162e8 100%);
+    color: white;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 8px 20px;
+    text-transform: none;
+}
+
+.dialog-container .MuiButton-contained:hover {
+    background: linear-gradient(45deg, #a162e8 0%, #8a4bce 100%);
+}
+
+.dialog-container .MuiButton-text {
+    color: #666;
+    text-transform: none;
+}
+
+/* Форма загрузки файла */
+.dialog-container .MuiFormControl-root {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.dialog-container .MuiInput-root {
+    width: 100%;
+}
+
+/* Сообщения об ошибках */
+.dialog-container .MuiAlert-root {
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.dialog-container .MuiFormHelperText-root {
+    margin-left: 0;
+    margin-top: 8px;
+}
+
+.dialog-container .MuiFormHelperText-contained {
+    margin-left: 0;
+}

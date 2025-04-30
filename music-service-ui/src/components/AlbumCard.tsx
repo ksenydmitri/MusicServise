@@ -38,43 +38,33 @@ const AlbumCard = ({ album, onAddTrack }: AlbumCardProps) => {
     }, [album.coverImageId]);
 
     return (
-        <Card className="album-card" sx={{ maxWidth: 250, position: 'relative' }}>
-            <Link to={`/album/${album.id}`} className="album-link">
+        <div className="albums-container">
+            <Card component={Link} to={`/album/${album.id}`}>
                 <CardMedia
                     component="img"
-                    height="200"
                     image={albumCoverUrl}
                     alt={album.title}
-                    sx={{ objectFit: 'cover' }}
                 />
                 <CardContent>
-                    <Typography gutterBottom variant="h6" component="div" noWrap>
-                        {album.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" noWrap>
+                    <Typography variant="h6">{album.title}</Typography>
+                    <Typography variant="body2">
                         {album.artists.join(', ')}
                     </Typography>
                 </CardContent>
-            </Link>
-            {onAddTrack && (
-                <IconButton
-                    aria-label="add track"
-                    onClick={onAddTrack}
-                    sx={{
-                        position: 'absolute',
-                        bottom: 16,
-                        right: 16,
-                        backgroundColor: 'primary.main',
-                        color: 'white',
-                        '&:hover': {
-                            backgroundColor: 'primary.dark'
-                        }
-                    }}
-                >
-                    <Add />
-                </IconButton>
-            )}
-        </Card>
+                {onAddTrack && (
+                    <IconButton
+                        aria-label="add track"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onAddTrack();
+                        }}
+                    >
+                        <Add />
+                    </IconButton>
+                )}
+            </Card>
+        </div>
     );
 };
 

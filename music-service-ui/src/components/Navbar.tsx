@@ -1,16 +1,16 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import './styles/navbar.css'; // Подключение стилей
+import './styles/navbar.css';
 
 const Navbar = () => {
     const { isAuthenticated, logout } = useAuth();
 
     return (
         <nav className="navbar">
+            <span>Music webapp</span>
             <Link to="/">Главная</Link>
             {isAuthenticated ? (
                 <>
-                    <span>Music webapp</span>
                     <Link to="/create-album">Создать альбом</Link>
                     <Link to="/user-info">Информация о пользователе</Link>
                     <Link to="/albums">Мои альбомы</Link>

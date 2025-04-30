@@ -113,8 +113,8 @@ const TrackCard = ({ track }: TrackCardProps) => {
             <h3>{track.title}</h3>
             <p>Длительность: {track.duration}</p>
             <p>Исполнитель: {track.usernames}</p>
-            <button onClick={playTrack} className="play-button">Воспроизвести</button>
-            <button onClick={downloadTrack} className="download-button">Скачать</button>
+            <button onClick={playTrack} >Воспроизвести</button>
+            <button onClick={downloadTrack}>Скачать</button>
 
             {audioUrl && (
                 <audio

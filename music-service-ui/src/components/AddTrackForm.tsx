@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { trackApi } from '../api/api';
+import './styles/dialog.css'
 
 interface AddTrackFormProps {
     albumId: number;
@@ -117,90 +118,95 @@ const AddTrackForm: React.FC<AddTrackFormProps> = ({ albumId, onClose, onSuccess
     };
 
     return (
-        <Dialog open={true} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>Добавить новый трек</DialogTitle>
-            <Box component="form" onSubmit={handleSubmit}>
-                <DialogContent>
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                            {error}
-                        </Alert>
-                    )}
+        <div className="dialog-container">
+            <Dialog open={true} onClose={onClose} maxWidth="sm" fullWidth className="dialog-paper">
+                <DialogTitle className="dialog-title">Добавить новый трек</DialogTitle>
+                <Box component="form" onSubmit={handleSubmit} className="dialog-form">
+                    <DialogContent className="dialog-content">
+                        {error && (
+                            <Alert severity="error" className="dialog-error">
+                                {error}
+                            </Alert>
+                        )}
 
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label="Название трека"
-                        fullWidth
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        required
-                        disabled={isLoading}
-                        sx={{ mb: 2 }}
-                    />
-
-                    <TextField
-                        margin="dense"
-                        label="Длительность (секунды)"
-                        type="number"
-                        fullWidth
-                        value={duration || ''}
-                        onChange={(e) => setDuration(Number(e.target.value))}
-                        required
-                        disabled={isLoading}
-                        inputProps={{ min: 1 }}
-                        sx={{ mb: 2 }}
-                    />
-
-                    <TextField
-                        margin="dense"
-                        label="Жанр"
-                        fullWidth
-                        value={genre}
-                        onChange={(e) => setGenre(e.target.value)}
-                        required
-                        disabled={isLoading}
-                        sx={{ mb: 3 }}
-                    />
-
-                    <FormControl fullWidth error={!!fileError}>
-                        <Input
-                            type="file"
-                            inputProps={{
-                                accept: 'audio/mpeg, audio/wav, audio/ogg'
-                            }}
-                            onChange={handleFileChange}
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            label="Название трека"
+                            fullWidth
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            required
                             disabled={isLoading}
+                            className="dialog-field"
                         />
-                        {fileError && (
-                            <FormHelperText>{fileError}</FormHelperText>
-                        )}
-                        {mediaFile && !fileError && (
-                            <FormHelperText>
-                                Выбран файл: {mediaFile.name} ({(mediaFile.size / 1024 / 1024).toFixed(2)} MB)
-                            </FormHelperText>
-                        )}
-                    </FormControl>
-                </DialogContent>
-                <DialogActions>
-                    <Button
-                        onClick={onClose}
-                        disabled={isLoading}
-                    >
-                        Отмена
-                    </Button>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        disabled={isLoading}
-                        endIcon={isLoading ? <CircularProgress size={20} /> : null}
-                    >
-                        {isLoading ? 'Добавление...' : 'Добавить трек'}
-                    </Button>
-                </DialogActions>
-            </Box>
-        </Dialog>
+
+                        <TextField
+                            margin="dense"
+                            label="Длительность (секунды)"
+                            type="number"
+                            fullWidth
+                            value={duration || ''}
+                            onChange={(e) => setDuration(Number(e.target.value))}
+                            required
+                            disabled={isLoading}
+                            inputProps={{ min: 1 }}
+                            className="dialog-field"
+                        />
+
+                        <TextField
+                            margin="dense"
+                            label="Жанр"
+                            fullWidth
+                            value={genre}
+                            onChange={(e) => setGenre(e.target.value)}
+                            required
+                            disabled={isLoading}
+                            className="dialog-field"
+                        />
+
+                        <FormControl fullWidth error={!!fileError} className="dialog-file-upload">
+                            <Input
+                                type="file"
+                                inputProps={{
+                                    accept: 'audio/mpeg, audio/wav, audio/ogg'
+                                }}
+                                onChange={handleFileChange}
+                                disabled={isLoading}
+                                className="dialog-file-input"
+                            />
+                            {fileError && (
+                                <FormHelperText className="dialog-error-text">{fileError}</FormHelperText>
+                            )}
+                            {mediaFile && !fileError && (
+                                <FormHelperText className="dialog-file-info">
+                                    Выбран файл: {mediaFile.name} ({(mediaFile.size / 1024 / 1024).toFixed(2)} MB)
+                                </FormHelperText>
+                            )}
+                        </FormControl>
+                    </DialogContent>
+                    <DialogActions className="dialog-actions">
+                        <Button
+                            onClick={onClose}
+                            disabled={isLoading}
+                            className="dialog-cancel-button"
+                        >
+                            Отмена
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            disabled={isLoading}
+                            className="dialog-submit-button"
+                            endIcon={isLoading ? <CircularProgress size={20} className="dialog-spinner" /> : null}
+                        >
+                            {isLoading ? 'Добавление...' : 'Добавить трек'}
+                        </Button>
+                    </DialogActions>
+                </Box>
+            </Dialog>
+        </div>
     );
 };
 
-export default AddTrackForm;
+            export default AddTrackForm;

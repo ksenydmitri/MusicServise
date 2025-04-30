@@ -1,4 +1,7 @@
 .track-card {
+    display: flex; /* Включаем flexbox */
+    flex-direction: column; /* Располагаем элементы вертикально */
+    align-items: flex-start; /* Выравниваем элементы по левому краю */
     border: 1px solid #ccc;
     border-radius: 8px;
     padding: 16px;
@@ -6,6 +9,7 @@
     text-align: left;
     transition: box-shadow 0.3s ease, transform 0.2s ease;
     background-color: #f9f9f9;
+    width: 220px; /* Фиксированная ширина или min-width */
 }
 
 .track-card:hover {
@@ -17,21 +21,24 @@
     font-size: 1.2em;
     color: #333;
     margin-bottom: 8px;
+    width: 100%; /* Занимает всю ширину карточки */
 }
 
 .circular-avatar {
-    width: 80px; /* Размер изображения */
+    width: 80px;
     height: 80px;
-    border-radius: 50%; /* Делает форму круглой */
-    object-fit: cover; /* Убедитесь, что изображение масштабируется правильно */
-    border: 2px solid #ddd; /* Граница вокруг изображения */
-    margin-bottom: 10px; /* Расстояние от текста */
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ddd;
+    margin-bottom: 10px;
+    align-self: center; /* Центрируем аватар по горизонтали */
 }
 
 .track-card p {
     margin: 4px 0;
     font-size: 1em;
     color: #555;
+    width: 100%; /* Занимает всю ширину карточки */
 }
 
 .track-card p span {
@@ -39,3 +46,15 @@
     color: #444;
 }
 
+.track-card button {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(45deg, #c081f8 0%, #a162e8 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: auto; /* Прижимаем кнопку к низу карточки */
+}
