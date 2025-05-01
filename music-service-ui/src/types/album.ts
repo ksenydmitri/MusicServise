@@ -1,5 +1,6 @@
 // types/album.ts
 import {Track} from "./track";
+import { User } from "./user"; // Добавляем тип User
 
 export interface Album {
     id: number;
@@ -7,10 +8,5 @@ export interface Album {
     artists: string[];
     coverImageId?: string;
     tracks: Track[];
-}
-
-interface CreateAlbumRequest {
-    name: string;  // Изменил title на name для соответствия DTO
-    userId: number;
-    collaborators: string[];  // Изменил на string[] для username
+    userIds: number[];
 }

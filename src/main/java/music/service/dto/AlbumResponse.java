@@ -10,6 +10,7 @@ public class AlbumResponse {
     private Long id;
     private String title;
     private List<String> artists;
-    private List<String> tracks;
+    private List<TrackResponse> tracks;
     private String coverImageId;
+    private List<Long> userIds;
 }

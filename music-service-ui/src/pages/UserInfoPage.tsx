@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { authApi, userApi } from '../api/api';
 import './styles/login.css';
-import {Album} from "../types/album";
+import { useAuth } from '../context/AuthContext'; // Импортируем контекст аутентификации
 
 interface UserData {
     id: number;
@@ -11,6 +11,7 @@ interface UserData {
 }
 
 const UserInfoPage = () => {
+    const { user: authUser, login } = useAuth(); // Получаем данные и методы из контекста
     const [user, setUser] = useState<UserData>({
         id: 0,
         username: '',
@@ -26,13 +27,11 @@ const UserInfoPage = () => {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    // Retrieve token (assuming it's stored in localStorage for simplicity)
-    const token = localStorage.getItem('token');
-
     useEffect(() => {
         const fetchUser = async () => {
             setLoading(true);
             try {
+                const token = localStorage.getItem('token');
                 if (!token) {
                     throw new Error('Токен не найден');
                 }
@@ -54,7 +53,7 @@ const UserInfoPage = () => {
                 setFormData({
                     username: userData.username,
                     email: userData.email,
-                    password: '', // Password remains unset for security
+                    password: '', // Пароль остается пустым для безопасности
                 });
             } catch (error: any) {
                 console.error('Ошибка получения данных:', error);
@@ -65,7 +64,7 @@ const UserInfoPage = () => {
         };
 
         fetchUser();
-    }, [token]);
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -82,6 +81,7 @@ const UserInfoPage = () => {
         setSuccessMessage(null);
 
         try {
+            const token = localStorage.getItem('token');
             if (!token) {
                 throw new Error('Токен не найден');
             }
@@ -95,17 +95,42 @@ const UserInfoPage = () => {
                 dataToUpdate.password = formData.password;
             }
 
-            await userApi.updateUser(user.id, dataToUpdate, token); // Pass token for authorization
-            const updatedUser = await authApi.getCurrentUser(token); // Fetch updated data with token
-            setUser(updatedUser.data);
+            // Обновляем данные пользователя
+            const updateResponse = await userApi.updateUser(user.id, dataToUpdate, token);
+
+            // После успешного обновления получаем новый токен (если сервер его возвращает)
+            // или используем старый, если сервер не возвращает новый токен
+            const newToken = updateResponse.data?.token || token;
+
+            // Если сервер возвращает обновленные данные пользователя, используем их
+            const updatedUserData = updateResponse.data?.user || {
+                id: user.id,
+                username: formData.username,
+                email: formData.email,
+            };
+
+            // Обновляем контекст аутентификации
+            login({
+                id: updatedUserData.id,
+                username: updatedUserData.username,
+                email: updatedUserData.email,
+            }, newToken);
+
+            // Обновляем локальное состояние
+            setUser(prev => ({
+                ...prev,
+                username: updatedUserData.username,
+                email: updatedUserData.email,
+            }));
+
             setSuccessMessage('Данные пользователя успешно обновлены');
         } catch (error: any) {
-            setErrorMessage('Ошибка при обновлении данных пользователя');
+            console.error('Ошибка обновления:', error);
+            setErrorMessage(error.response?.data?.message || 'Ошибка при обновлении данных пользователя');
         } finally {
             setLoading(false);
         }
     };
-
 
     return (
         <div className="loginContainer">

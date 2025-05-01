@@ -74,9 +74,9 @@ const HomePage = () => {
                     setAlbums([]);
                 }
             } catch (error) {
-                console.error('Error fetching tracks:', error);
+                console.error('Ошибка загрузки альбомов:', error);
             }
-        }
+        };
 
         fetchTracks().catch((error) => console.error('Promise Error:', error));
         fetchAlbums().catch((error) => console.error('Promise Error:', error));

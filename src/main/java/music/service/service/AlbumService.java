@@ -88,11 +88,20 @@ public class AlbumService {
                 .map(User::getUsername)
                 .collect(Collectors.toList()));
         response.setTracks(album.getTracks().stream()
-                .map(Track::getTitle)
+                .map(track -> TrackResponse.builder()
+                        .title(track.getTitle())
+                        .duration(track.getDuration())
+                        .genre(track.getGenre())
+                        .releaseDate(track.getReleaseDate())
+                        .build())
                 .collect(Collectors.toList()));
         response.setCoverImageId(album.getCoverImageId());
+        response.setUserIds(album.getUsers().stream()
+                .map(User::getId)
+                .collect(Collectors.toList()));
         return response;
     }
+
 
 
     @Transactional

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {useCallback, useEffect, useId, useState} from 'react';
 import { useParams } from 'react-router-dom';
 import { Album } from '../types/album';
 import { albumApi, mediaApi } from '../api/api';
@@ -7,6 +7,7 @@ import defaultAvatar from '../cover_image.jpg';
 import AddTrackForm from "../components/AddTrackForm";
 import {Track} from "../types/track";
 import './styles/global.css'
+import {useAuth} from "../context/AuthContext";
 
 const AlbumPage = () => {
     const { id } = useParams<{ id: string }>();
@@ -15,6 +16,7 @@ const AlbumPage = () => {
     const [isLoadingAlbum, setIsLoadingAlbum] = useState<boolean>(false);
     const [showModal, setShowModal] = useState(false);
     const [refreshTracks, setRefreshTracks] = useState<boolean>(false);
+    const { user } = useAuth();
 
     const numericId = Number(id);
 
@@ -86,14 +88,15 @@ const AlbumPage = () => {
                 <div className="album-page">
                     <div className="album-info">
                         <h1 className="album-title">{album.title}</h1>
-                        <p className="album-authors">
-                            <strong>Авторы:</strong> {album.artists.join(', ')}
-                        </p>
-
-                        <button onClick={toggleModal} className="custom-button">
-                            Добавить трек
-                        </button>
-
+                        {user && album.userIds.includes(user.id) && (
+                            <button onClick={toggleModal} className="custom-button">
+                                Добавить трек
+                            </button>
+                        )}
+                        <h2>Исполнители</h2>
+                        <div className="album-title">
+                            {album.artists.join(', ')}
+                        </div>
                         <div className="track-list-section">
                             <h3>Треки</h3>
                             <div className="horizontal-scroll-list">

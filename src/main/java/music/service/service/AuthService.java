@@ -56,4 +56,26 @@ public class AuthService {
     public UserResponse getUserDetailsByUsername(String username) {
         return userService.getUserDetailsByUsername(username);
     }
+
+    public AuthResponse updateUser(String currentUsername, UpdateUserRequest request) {
+        User user = userService.findByUsernameOrEmailForAuth(currentUsername)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (request.getUsername() != null && !request.getUsername().equals(currentUsername)) {
+            if (userService.usernameExists(request.getUsername())) {
+                throw new RuntimeException("Username is already taken");
+            }
+        }
+
+        UserResponse updatedUser = userService.updateUser(user.getId(), request);
+        String newToken = null;
+        if (request.getUsername() != null && !request.getUsername().equals(currentUsername)) {
+            newToken = userService.generateToken(request.getUsername());
+        }
+
+        AuthResponse response = new AuthResponse();
+        response.setUser(updatedUser);
+        response.setUsername(user.getUsername());
+        response.setToken(newToken);
+        return response;
+    }
 }

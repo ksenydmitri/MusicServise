@@ -1,9 +1,6 @@
 package music.service.controller;
 
-import music.service.dto.AuthRequest;
-import music.service.dto.AuthResponse;
-import music.service.dto.CreateUserRequest;
-import music.service.dto.UserResponse;
+import music.service.dto.*;
 import music.service.service.AuthService;
 
 import org.springframework.http.HttpStatus;
@@ -48,4 +45,20 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
+
+    @PutMapping("/update")
+    public ResponseEntity<?> updateUser(
+            @RequestHeader("Authorization") String token,
+            @RequestBody UpdateUserRequest request
+    ) {
+        try {
+            String username = authService.getCurrentUser(token);
+            AuthResponse response = authService.updateUser(username, request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", ex.getMessage()));
+        }
+    }
+
 }
