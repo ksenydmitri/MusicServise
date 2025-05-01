@@ -5,8 +5,6 @@ import { Track } from '../types/track';
 import { Album } from  '../types/album'
 import './styles/global.css';
 import AlbumCard from "../components/AlbumCard";
-import {Simulate} from "react-dom/test-utils";
-import error = Simulate.error;
 
 const HomePage = () => {
     const [tracks, setTracks] = useState<Track[]>([]);

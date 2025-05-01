@@ -4,14 +4,13 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background-color: #c081f8; /* Синий фон */
+    background-color: #c081f8;
     color: white;
     font-family: Arial, sans-serif;
     height: 50px;
     min-height: 50px;
 }
 
-/* Ссылки */
 .navbar a {
     text-decoration: none;
     color: white;
@@ -21,7 +20,7 @@
 }
 
 .navbar a:hover {
-    color: #ffc107; /* Желтый цвет при наведении */
+    color: #ffc107;
 }
 
 /* Кнопка "Выйти" */

@@ -4,6 +4,7 @@ import "./styles/albumCard.css";
 import useAlbumCover from "../hooks/useAlbumCover";
 import { Card, CardMedia, CardContent, Typography, IconButton } from "@mui/material";
 import { Add } from "@mui/icons-material";
+import {useEffect} from "react";
 
 interface AlbumCardProps {
     album: Album;
@@ -11,7 +12,10 @@ interface AlbumCardProps {
 }
 
 const AlbumCard = ({ album, onAddTrack }: AlbumCardProps) => {
-    const albumCoverUrl = useAlbumCover(album.coverImageId); // Используем хук
+    const albumCoverUrl = useAlbumCover(album.coverImageId);
+
+    useEffect(() => {
+    }, [album]);
 
     return (
         <div className="albums-container">

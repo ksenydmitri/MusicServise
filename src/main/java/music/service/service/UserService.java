@@ -2,6 +2,8 @@ package music.service.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 
 import music.service.dto.*;
@@ -24,21 +26,25 @@ public class UserService {
     private final TrackRepository trackRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final AlbumService albumService;
+    private final TrackService trackService;
 
     @Autowired
     public UserService(UserRepository userRepository,
                        AlbumRepository albumRepository,
                        TrackRepository trackRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtUtil jwtUtil) {
+                       JwtUtil jwtUtil, AlbumService albumService,
+                       TrackService trackService) {
         this.userRepository = userRepository;
         this.albumRepository = albumRepository;
         this.trackRepository = trackRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.albumService = albumService;
+        this.trackService = trackService;
     }
 
-    // User creation with password encoding
     public User createAndEncodeUser(CreateUserRequest request) {
         User user = new User();
         user.setUsername(request.getUsername());
@@ -48,22 +54,18 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    // Check if a username exists
     public boolean usernameExists(String username) {
         return userRepository.existsByUsername(username);
     }
 
-    // Check if an email exists
     public boolean emailExists(String email) {
         return userRepository.existsByEmail(email);
     }
 
-    // Generate token for a username
     public String generateToken(String username) {
         return jwtUtil.generateToken(username);
     }
 
-    // Extract username from a token
     public String extractUsernameFromToken(String token) {
         try {
             String cleanToken = token.replace("Bearer ", "");
@@ -73,7 +75,6 @@ public class UserService {
         }
     }
 
-    // Verify password
     public boolean checkPassword(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
@@ -91,6 +92,7 @@ public class UserService {
     public UserResponse updateUser(Long userId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
+
         if (request.getUsername() != null) {
             user.setUsername(request.getUsername());
         }
@@ -103,9 +105,24 @@ public class UserService {
         if (request.getRole() != null) {
             user.setRole(request.getRole());
         }
+
+        List<Album> albums = albumRepository.findAllByUserId(userId);
+        for (Album album : albums) {
+            Set<User> artists = album.getUsers();
+            for (User artist : artists) {
+                if (artist.getId().equals(userId)) {
+                    artist.setUsername(user.getUsername());
+                    artist.setEmail(user.getEmail());
+                }
+            }
+            albumRepository.save(album);
+            albumService.evictAllAlbumCaches();
+        }
+
         User updatedUser = userRepository.save(user);
         return mapToUserResponse(updatedUser);
     }
+
 
     public Optional<User> findByUsernameOrEmailForAuth(String query) {
         return userRepository.findByUsername(query)
@@ -118,6 +135,9 @@ public class UserService {
         response.setUsername(user.getUsername());
         response.setEmail(user.getEmail());
         response.setRole(user.getRole());
+        response.setAlbumIds(user.getAlbums().stream()
+                .map(Album::getId)
+                .collect(Collectors.toList()));
         return response;
     }
 
@@ -146,6 +166,8 @@ public class UserService {
                 trackRepository.delete(track);
             }
         }
+        trackService.evictAllTrackCaches();
+        albumService.evictAllAlbumCaches();
         userRepository.delete(user);
     }
 }

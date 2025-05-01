@@ -81,8 +81,6 @@ const TrackCard = ({ track }: TrackCardProps) => {
             link.click();
 
             console.log(`Трек успешно скачан: ${url}`);
-
-            // Очистка после скачивания
             setTimeout(() => {
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);

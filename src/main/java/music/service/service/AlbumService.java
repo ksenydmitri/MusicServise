@@ -90,6 +90,7 @@ public class AlbumService {
                 .collect(Collectors.toList()));
         response.setTracks(album.getTracks().stream()
                 .map(track -> TrackResponse.builder()
+                        .id(track.getId())
                         .title(track.getTitle())
                         .duration(track.getDuration())
                         .genre(track.getGenre())
@@ -171,7 +172,7 @@ public class AlbumService {
         return mapToAlbumResponse(savedAlbum);
     }
 
-    private void evictAllAlbumCaches() {
+    public void evictAllAlbumCaches() {
         cacheService.evictByPattern("albums_*");
         cacheService.evictByPattern("album_*");
     }
@@ -220,8 +221,6 @@ public class AlbumService {
 
     public void clearCacheForAlbum(Long albumId) {
         cacheService.evict("album_" + albumId);
-        cacheService.evictByPattern("albums_*");
+        cacheService.evictByPattern("album_*");
     }
-
-
 }

@@ -66,7 +66,13 @@ export const albumApi = {
             }
         });
     },
-    updateAlbum: (id: number, data: any) => api.patch(`/albums/${id}`, data),
+    updateAlbum: (id: number, formData: FormData) => {
+        return api.patch(`/albums/${id}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+    },
     deleteAlbum: (id: number) => api.delete(`/albums/${id}`),
 };
 

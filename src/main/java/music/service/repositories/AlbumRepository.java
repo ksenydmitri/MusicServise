@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface AlbumRepository extends JpaRepository<Album, Long> {
 
@@ -32,4 +34,7 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
             @Param("title") String title,
             Pageable pageable
     );
+
+    @Query("SELECT a FROM Album a JOIN a.users u WHERE u.id = :userId")
+    List<Album> findAllByUserId(@Param("userId") Long userId);
 }

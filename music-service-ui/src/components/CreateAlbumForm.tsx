@@ -10,12 +10,12 @@ interface UserOption {
 }
 
 interface Props {
-    open: boolean;  // Модальное окно открыто или закрыто
-    handleClose: () => void;  // Функция закрытия окна
+    open: boolean;
+    handleClose: () => void;
 }
 
 const CreateAlbumModal: React.FC<Props> = ({ open, handleClose }) => {
-    const { user, isAuthenticated } = useAuth();
+    const { user } = useAuth();
     const [formData, setFormData] = useState({
         name: "",
         coverImage: null as File | null,
@@ -104,9 +104,27 @@ const CreateAlbumModal: React.FC<Props> = ({ open, handleClose }) => {
                 </Button>
                 {previewImage && <img src={previewImage} alt="Предпросмотр" className="preview-image-container"/>}
 
-                <Autocomplete multiple options={userOptions} getOptionLabel={(option) => option.name} value={selectedUsers} onChange={handleUserSelect} filterSelectedOptions renderInput={(params) => <TextField {...params} placeholder="Добавьте пользователей" />} renderTags={(value, getTagProps) =>
-                    value.map((option, index) => <Chip label={option.name} {...getTagProps({ index })} />)
-                } />
+                <Autocomplete
+                    multiple
+                    options={userOptions}
+                    getOptionLabel={(option: UserOption) => option.name}
+                    value={selectedUsers}
+                    onChange={handleUserSelect}
+                    filterSelectedOptions
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            placeholder="Добавьте пользователей"
+                            margin="normal"
+                            sx={{ mt: 2 }}
+                        />
+                    )}
+                    renderTags={(value: UserOption[], getTagProps) =>
+                        value.map((option: UserOption, index: number) => (
+                            <Chip label={option.name} {...getTagProps({ index })} key={option.id} />
+                        ))
+                    }
+                />
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleClose}>Отмена</Button>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { authApi, userApi } from '../api/api';
+import { userApi } from '../api/api';
 import './styles/login.css';
-import { useAuth } from '../context/AuthContext'; // Импортируем контекст аутентификации
+import { useAuth } from '../context/AuthContext';
 
 interface UserData {
     id: number;
@@ -11,13 +11,7 @@ interface UserData {
 }
 
 const UserInfoPage = () => {
-    const { user: authUser, login } = useAuth(); // Получаем данные и методы из контекста
-    const [user, setUser] = useState<UserData>({
-        id: 0,
-        username: '',
-        email: '',
-        role: '',
-    });
+    const { user, login } = useAuth();
     const [formData, setFormData] = useState({
         username: '',
         email: '',
@@ -28,43 +22,14 @@ const UserInfoPage = () => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchUser = async () => {
-            setLoading(true);
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    throw new Error('Токен не найден');
-                }
-
-                const response = await authApi.getCurrentUser(token);
-
-                if (!response.data) {
-                    throw new Error('Пустой ответ от сервера');
-                }
-
-                const userData: UserData = {
-                    id: response.data.id || 0,
-                    username: response.data.username || '',
-                    email: response.data.email || '',
-                    role: response.data.role || 'USER',
-                };
-
-                setUser(userData);
-                setFormData({
-                    username: userData.username,
-                    email: userData.email,
-                    password: '', // Пароль остается пустым для безопасности
-                });
-            } catch (error: any) {
-                console.error('Ошибка получения данных:', error);
-                setErrorMessage(error.message || 'Ошибка загрузки данных');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchUser();
-    }, []);
+        if (user) {
+            setFormData({
+                username: user.username,
+                email: user.email || '',
+                password: '',
+            });
+        }
+    }, [user]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -81,6 +46,10 @@ const UserInfoPage = () => {
         setSuccessMessage(null);
 
         try {
+            if (!user) {
+                throw new Error('Пользователь не авторизован');
+            }
+
             const token = localStorage.getItem('token');
             if (!token) {
                 throw new Error('Токен не найден');
@@ -95,34 +64,15 @@ const UserInfoPage = () => {
                 dataToUpdate.password = formData.password;
             }
 
-            // Обновляем данные пользователя
             const updateResponse = await userApi.updateUser(user.id, dataToUpdate, token);
-
-            // После успешного обновления получаем новый токен (если сервер его возвращает)
-            // или используем старый, если сервер не возвращает новый токен
             const newToken = updateResponse.data?.token || token;
-
-            // Если сервер возвращает обновленные данные пользователя, используем их
             const updatedUserData = updateResponse.data?.user || {
                 id: user.id,
                 username: formData.username,
                 email: formData.email,
             };
 
-            // Обновляем контекст аутентификации
-            login({
-                id: updatedUserData.id,
-                username: updatedUserData.username,
-                email: updatedUserData.email,
-            }, newToken);
-
-            // Обновляем локальное состояние
-            setUser(prev => ({
-                ...prev,
-                username: updatedUserData.username,
-                email: updatedUserData.email,
-            }));
-
+            login(updatedUserData, newToken);
             setSuccessMessage('Данные пользователя успешно обновлены');
         } catch (error: any) {
             console.error('Ошибка обновления:', error);
@@ -131,6 +81,10 @@ const UserInfoPage = () => {
             setLoading(false);
         }
     };
+
+    if (!user) {
+        return <div className="loginContainer">Пользователь не авторизован</div>;
+    }
 
     return (
         <div className="loginContainer">
@@ -149,10 +103,6 @@ const UserInfoPage = () => {
                     <div>
                         <span>Email:</span>
                         <span>{user.email}</span>
-                    </div>
-                    <div>
-                        <span>Роль:</span>
-                        <span>{user.role}</span>
                     </div>
                 </div>
             </div>

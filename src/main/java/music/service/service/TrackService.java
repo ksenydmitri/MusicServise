@@ -89,14 +89,8 @@ public class TrackService {
         removeTrackRelations(track);
         trackRepository.delete(track);
         evictAllTrackCaches();
+        albumService.clearCacheForAlbum(track.getAlbum().getId());
     }
-
-    @Transactional
-    public Track getTrackWithAlbum(Long trackId) {
-        return trackRepository.findTrackWithAlbumById(trackId)
-                .orElseThrow(() -> new ResourceNotFoundException("Track not found with ID: " + trackId));
-    }
-
 
     @Transactional
     public Page<Track> getAllTracks(String username, String albumTitle, String title,
@@ -105,17 +99,17 @@ public class TrackService {
         int page = pageable != null ? pageable.getPageNumber() : DEFAULT_PAGE;
         int size = pageable != null ? pageable.getPageSize() : DEFAULT_SIZE;
 
-        String cacheKey = buildTracksCacheKey(
+        /*String cacheKey = buildTracksCacheKey(
                 username, albumTitle, title,
                 genre, playlistName, page, size);
 
         if (cacheService.containsKey(cacheKey)) {
             logger.debug("Cache hit for key: {}", cacheKey);
             return (Page<Track>) cacheService.get(cacheKey);
-        }
+        }*/
 
         Page<Track> tracks = fetchFilteredTracks(username, albumTitle, title, genre, playlistName, pageable);
-        cacheService.put(cacheKey, tracks);
+        //cacheService.put(cacheKey, tracks);
         return tracks;
     }
 
@@ -305,7 +299,7 @@ public class TrackService {
         cacheService.evictByPattern(TRACKS_CACHE_PREFIX + ":*");
     }
 
-    private void evictAllTrackCaches() {
+    public void evictAllTrackCaches() {
         cacheService.evictByPattern(TRACKS_CACHE_PREFIX + ":*");
         cacheService.evictByPattern(TRACK_CACHE_PREFIX + ":*");
     }

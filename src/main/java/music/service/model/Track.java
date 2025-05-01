@@ -29,7 +29,7 @@ public class Track {
     @Column(name = "release_date", nullable = false, updatable = false)
     private LocalDate releaseDate;
 
-    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
+    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinColumn(name = "album_id")
     private Album album;
 
