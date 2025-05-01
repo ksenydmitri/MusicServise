@@ -94,7 +94,7 @@ const CreateAlbumModal: React.FC<Props> = ({ open, handleClose }) => {
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth className="dialog-container">
             <DialogTitle>Создать новый альбом</DialogTitle>
             <DialogContent>
                 <TextField fullWidth label="Название альбома" name="name" onChange={handleChange} required />
@@ -102,7 +102,7 @@ const CreateAlbumModal: React.FC<Props> = ({ open, handleClose }) => {
                     Загрузить обложку
                     <input type="file" hidden accept="image/*" onChange={handleImageChange} />
                 </Button>
-                {previewImage && <img src={previewImage} alt="Предпросмотр" style={{ maxWidth: "100%" }} />}
+                {previewImage && <img src={previewImage} alt="Предпросмотр" className="preview-image-container"/>}
 
                 <Autocomplete multiple options={userOptions} getOptionLabel={(option) => option.name} value={selectedUsers} onChange={handleUserSelect} filterSelectedOptions renderInput={(params) => <TextField {...params} placeholder="Добавьте пользователей" />} renderTags={(value, getTagProps) =>
                     value.map((option, index) => <Chip label={option.name} {...getTagProps({ index })} />)

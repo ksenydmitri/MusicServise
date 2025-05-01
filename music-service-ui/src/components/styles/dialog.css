@@ -72,10 +72,11 @@
 /* Форма загрузки файла */
 .dialog-container .MuiFormControl-root {
     width: 100%;
-    margin-top: 8px;
+    margin-top: 1rem;
 }
 
 .dialog-container .MuiInput-root {
+    margin-top: 1rem;
     width: 100%;
 }
 
@@ -92,4 +93,24 @@
 
 .dialog-container .MuiFormHelperText-contained {
     margin-left: 0;
+}
+
+.dialog-container .preview-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 16px;
+    padding: 8px;
+    max-width: 150px; /* Ограничение ширины */
+    max-height: 150px; /* Ограничение высоты */
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #f5f5f5;
+}
+
+.dialog-container .preview-image-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover; /* Обрезает изображение, если оно слишком большое */
+    border-radius: 8px;
 }

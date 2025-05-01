@@ -11,7 +11,6 @@ const Navbar = () => {
             <Link to="/">Главная</Link>
             {isAuthenticated ? (
                 <>
-                    <Link to="/create-album">Создать альбом</Link>
                     <Link to="/user-info">Информация о пользователе</Link>
                     <Link to="/albums">Мои альбомы</Link>
                     <button onClick={logout}>Выйти</button>

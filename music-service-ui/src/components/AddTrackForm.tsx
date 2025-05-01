@@ -119,7 +119,7 @@ const AddTrackForm: React.FC<AddTrackFormProps> = ({ albumId, onClose, onSuccess
 
     return (
         <div className="dialog-container">
-            <Dialog open={true} onClose={onClose} maxWidth="sm" fullWidth className="dialog-paper">
+            <Dialog open={true} onClose={onClose} maxWidth="sm" fullWidth className="dialog-container">
                 <DialogTitle className="dialog-title">Добавить новый трек</DialogTitle>
                 <Box component="form" onSubmit={handleSubmit} className="dialog-form">
                     <DialogContent className="dialog-content">
