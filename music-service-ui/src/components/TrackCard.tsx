@@ -119,14 +119,13 @@ const TrackCard = ({ track }: TrackCardProps) => {
             {audioUrl && (
                 <audio
                     controls
-                    className="audio-player"
                     onEnded={() => {
                         console.log('Воспроизведение завершено, очищаем URL...');
                         URL.revokeObjectURL(audioUrl);
                         setAudioUrl(undefined);
                     }}
                 >
-                    <source src={audioUrl} type="audio/mpeg" />
+                    <source src={audioUrl} type="audio/mpeg" className="audio-player" />
                     Ваш браузер не поддерживает аудиоплеер.
                 </audio>
             )}

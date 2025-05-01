@@ -1,5 +1,6 @@
 package music.service.service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
@@ -205,16 +206,22 @@ public class AlbumService {
     @Transactional
     public void deleteAlbum(Long albumId) {
         Album album = getAlbumById(albumId);
+
         for (User user : album.getUsers()) {
             album.getUsers().remove(user);
+        }
+
+        if (album.getCoverImageId() != null) {
+            mediaService.deleteFile(album.getCoverImageId());
         }
         albumRepository.deleteById(albumId);
         clearCacheForAlbum(albumId);
     }
 
     public void clearCacheForAlbum(Long albumId) {
-        String cacheKey = "album_" + albumId;
-        cacheService.evict(cacheKey);
+        cacheService.evict("album_" + albumId);
+        cacheService.evictByPattern("albums_*");
     }
+
 
 }

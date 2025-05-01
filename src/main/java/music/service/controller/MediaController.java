@@ -47,4 +47,15 @@ public class MediaController {
     public ResponseEntity<List<FileInfo>> searchFiles(@RequestParam String query) throws IOException {
         return ResponseEntity.ok(mediaService.searchFiles(query));
     }
+
+    @GetMapping("/stream/{fileId}")
+    public ResponseEntity<byte[]> streamFile(@PathVariable String fileId, @RequestHeader(value = "Range", required = false) String rangeHeader) throws IOException {
+        return mediaService.streamFile(fileId, rangeHeader);
+    }
+
+    @DeleteMapping("/delete/{fileId}")
+    public ResponseEntity<String> deleteFile(@PathVariable String fileId) {
+        mediaService.deleteFile(fileId);
+        return ResponseEntity.ok("Файл успешно удален.");
+    }
 }

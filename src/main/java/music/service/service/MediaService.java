@@ -2,6 +2,8 @@ package music.service.service;
 
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -84,6 +86,45 @@ public class MediaService {
                 .collect(Collectors.toList());
     }
 
-    // DTO класс для возврата информации о файлах
-    public record FileInfo(String id, String name, String url, String mimeType, Long size) {}
+    public ResponseEntity<byte[]> streamFile(String fileId, String rangeHeader) throws IOException {
+        byte[] fileContent = downloadFile(fileId);
+        FileInfo fileInfo = getFileInfo(fileId);
+
+        if (rangeHeader == null) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(fileInfo.mimeType()))
+                    .header("Accept-Ranges", "bytes")
+                    .body(fileContent);
+        }
+
+        String[] ranges = rangeHeader.replace("bytes=", "").split("-");
+        int start = Integer.parseInt(ranges[0]);
+        int end = ranges.length > 1 ? Integer.parseInt(ranges[1]) : fileContent.length - 1;
+        int chunkSize = end - start + 1;
+
+        byte[] partialContent = new byte[chunkSize];
+        System.arraycopy(fileContent, start, partialContent, 0, chunkSize);
+
+        return ResponseEntity.status(206)
+                .contentType(MediaType.parseMediaType(fileInfo.mimeType()))
+                .header("Content-Range", "bytes " + start + "-" + end + "/" + fileContent.length)
+                .header("Accept-Ranges", "bytes")
+                .body(partialContent);
+    }
+
+    public void deleteFile(String fileId) {
+        try {
+            googleDriveService.files().delete(fileId).execute();
+        } catch (IOException e) {
+            System.err.println("Ошибка при удалении файла: " + e.getMessage());
+            throw new RuntimeException("Не удалось удалить файл: " + fileId, e);
+        }
+    }
+
+    public record FileInfo(
+            String id,
+            String name,
+            String url,
+            String mimeType,
+            Long size) {}
 }

@@ -58,3 +58,20 @@
     transition: all 0.2s;
     margin-top: auto; /* Прижимаем кнопку к низу карточки */
 }
+
+.track-card .audio-player {
+    width: 100%;
+    border-radius: 8px;
+    margin-top: 12px;
+    background: #ffffff;
+    padding: 6px;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Добавляем кастомное оформление */
+.track-card audio {
+    display: block;
+    width: 100%;
+    background: linear-gradient(45deg, #c081f8, #a162e8);
+    border-radius: 8px;
+}

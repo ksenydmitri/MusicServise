@@ -93,6 +93,7 @@ export const mediaApi = {
             }
         });
     },
+    streamMedia: (mediaFileId: string) => api.get(`/media/stream/${mediaFileId}`, { responseType: 'blob' }),
 };
 
 export const playlistApi = {

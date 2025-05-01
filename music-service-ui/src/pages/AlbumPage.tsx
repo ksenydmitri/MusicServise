@@ -1,86 +1,66 @@
-import React, {useCallback, useEffect, useId, useState} from 'react';
-import { useParams } from 'react-router-dom';
-import { Album } from '../types/album';
-import { albumApi, mediaApi } from '../api/api';
-import './styles/albumPage.css';
-import defaultAvatar from '../cover_image.jpg';
+import React, { useCallback, useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Album } from "../types/album";
+import { albumApi } from "../api/api";
+import "./styles/albumPage.css";
 import AddTrackForm from "../components/AddTrackForm";
-import {Track} from "../types/track";
-import './styles/global.css'
-import {useAuth} from "../context/AuthContext";
+import DeleteModal from "../components/DeleteModal";
+import { useAuth } from "../context/AuthContext";
+import useAlbumCover from "../hooks/useAlbumCover";
 
 const AlbumPage = () => {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+
     const [album, setAlbum] = useState<Album | null>(null);
-    const [albumCoverUrl, setAlbumCoverUrl] = useState<string>(defaultAvatar);
     const [isLoadingAlbum, setIsLoadingAlbum] = useState<boolean>(false);
     const [showModal, setShowModal] = useState(false);
     const [refreshTracks, setRefreshTracks] = useState<boolean>(false);
-    const { user } = useAuth();
+    const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 
     const numericId = Number(id);
+    const albumCoverUrl = useAlbumCover(album?.coverImageId); // Используем кастомный хук
 
     const fetchAlbum = useCallback(async () => {
         setIsLoadingAlbum(true);
         try {
             const response = await albumApi.getAlbum(numericId);
-            if (response.data) {
-                setAlbum(response.data);
-            } else {
-                console.error('Альбом не найден');
-            }
+            setAlbum(response.data || null);
         } catch (error) {
-            console.error('Ошибка загрузки альбома:', error);
+            console.error("Ошибка загрузки альбома:", error);
             setAlbum(null);
         } finally {
             setIsLoadingAlbum(false);
         }
     }, [numericId, refreshTracks]);
 
-    const fetchCover = useCallback(async () => {
-        if (!album?.coverImageId) {
-            setAlbumCoverUrl(defaultAvatar);
-            return;
-        }
-
-        try {
-            const response = await mediaApi.downloadMedia(album.coverImageId);
-            const contentType = response.headers['content-type'] || 'image/jpeg';
-            const blob = new Blob([response.data], { type: contentType });
-            const url = URL.createObjectURL(blob);
-            setAlbumCoverUrl(url);
-        } catch (error) {
-            console.error('Ошибка загрузки обложки:', error);
-            setAlbumCoverUrl(defaultAvatar);
-        }
-    }, [album?.coverImageId]);
-
     useEffect(() => {
         fetchAlbum();
     }, [fetchAlbum]);
 
-    useEffect(() => {
-        if (album) {
-            fetchCover();
-        }
-    }, [album, fetchCover]);
-
-    const toggleModal = () => {
-        setShowModal((prev) => !prev);
-    };
+    const toggleModal = () => setShowModal((prev) => !prev);
 
     const handleTrackAdded = () => {
-        setRefreshTracks(prev => !prev);
+        setRefreshTracks((prev) => !prev);
         toggleModal();
     };
 
-    if (isLoadingAlbum) {
-        return <div className="page-container">Загрузка альбома...</div>;
-    }
+    const handleDeleteClick = () => setDeleteModalOpen(true);
 
-    if (!album) {
-        return <div className="page-container">Альбом не найден</div>;
-    }
+    const handleConfirmDelete = async () => {
+        try {
+            await albumApi.deleteAlbum(album!.id);
+            console.log("Альбом удален");
+            setDeleteModalOpen(false);
+            navigate("/albums");
+        } catch (error) {
+            console.error("Ошибка удаления альбома:", error);
+        }
+    };
+
+    if (isLoadingAlbum) return <div className="page-container">Загрузка альбома...</div>;
+    if (!album) return <div className="page-container">Альбом не найден</div>;
 
     return (
         <div className="page-container">
@@ -89,19 +69,25 @@ const AlbumPage = () => {
                     <div className="album-info">
                         <h1 className="album-title">{album.title}</h1>
                         {user && album.userIds.includes(user.id) && (
-                            <button onClick={toggleModal} className="custom-button">
-                                Добавить трек
-                            </button>
+                            <>
+                                <button onClick={toggleModal} className="custom-button">
+                                    Добавить трек
+                                </button>
+                                <button onClick={handleDeleteClick} className="custom-button error">
+                                    Удалить
+                                </button>
+                            </>
                         )}
                         <h2>Исполнители</h2>
-                        <div className="album-title">
-                            {album.artists.join(', ')}
-                        </div>
+                        <div className="album-title">{album.artists.join(", ")}</div>
+
+                        <DeleteModal open={isDeleteModalOpen} onClose={() => setDeleteModalOpen(false)} onConfirm={handleConfirmDelete} />
+
                         <div className="track-list-section">
                             <h3>Треки</h3>
                             <div className="horizontal-scroll-list">
                                 <div className="horizontal-scroll-container">
-                                    {album.tracks.map((track: Track, index: number) => (
+                                    {album.tracks.map((track, index) => (
                                         <div key={track.id} className="track-card">
                                             <span className="track-number">{index + 1}</span>
                                             <h4 className="track-title">{track.title}</h4>
@@ -112,21 +98,11 @@ const AlbumPage = () => {
                             </div>
                         </div>
 
-                        {showModal && (
-                            <AddTrackForm
-                                albumId={album.id}
-                                onClose={() => setShowModal(false)}
-                                onSuccess={handleTrackAdded}
-                            />
-                        )}
+                        {showModal && <AddTrackForm albumId={album.id} onClose={() => setShowModal(false)} onSuccess={handleTrackAdded} />}
                     </div>
 
                     <div className="album-cover-container">
-                        <img
-                            src={albumCoverUrl}
-                            alt={`Обложка альбома ${album.title}`}
-                            className="album-cover"
-                        />
+                        <img src={albumCoverUrl} alt={`Обложка альбома ${album.title}`} className="album-cover" />
                     </div>
                 </div>
             </div>
