@@ -38,4 +38,5 @@ build/
 *.log
 *.jmx
 *.json
-!logs/*.log
+!**/logs/*.log
+/logs/application.log
