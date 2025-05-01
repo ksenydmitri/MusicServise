@@ -21,7 +21,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                           @Email(message = "Invalid email format")
                           String email);
 
-    Optional<? extends User> findByEmail(String username);
+    Optional<User> findByEmail(String username);
 
     List<User> findByUsernameIn(List<String> usernames);
 }
