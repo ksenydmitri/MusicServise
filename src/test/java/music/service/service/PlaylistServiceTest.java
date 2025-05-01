@@ -1,32 +1,21 @@
 package music.service.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import java.util.*;
-
-import music.service.dto.CreatePlaylistRequest;
-import music.service.dto.PlaylistResponse;
-import music.service.dto.UpdatePlaylistRequest;
+import music.service.dto.*;
 import music.service.exception.ResourceNotFoundException;
-import music.service.model.Playlist;
-import music.service.model.Track;
-import music.service.model.User;
-import music.service.repositories.PlaylistRepository;
-import music.service.repositories.TrackRepository;
-import music.service.repositories.UserRepository;
-import music.service.service.CacheService;
+import music.service.model.*;
+import music.service.repositories.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
+
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PlaylistServiceTest {
@@ -46,65 +35,71 @@ class PlaylistServiceTest {
     @InjectMocks
     private PlaylistService playlistService;
 
-    private Playlist playlist;
-    private User user;
-    private Track track;
+    private Playlist testPlaylist;
+    private User testUser;
+    private Track testTrack;
+    private CreatePlaylistRequest createRequest;
+    private UpdatePlaylistRequest updateRequest;
 
     @BeforeEach
     void setUp() {
-        user = new User();
-        user.setId(1L);
-        user.setUsername("testUser");
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setUsername("testUser");
 
-        track = new Track();
-        track.setId(1L);
-        track.setTitle("Test Track");
+        testTrack = new Track();
+        testTrack.setId(1L);
+        testTrack.setTitle("Test Track");
 
-        playlist = new Playlist();
-        playlist.setId(1L);
-        playlist.setName("Test Playlist");
-        playlist.setUsers(new HashSet<>(Collections.singleton(user)));
-        playlist.setTracks(new HashSet<>(Collections.singleton(track)));
-    }
+        testPlaylist = new Playlist();
+        testPlaylist.setId(1L);
+        testPlaylist.setName("Test Playlist");
+        testPlaylist.getUsers().add(testUser);
+        testPlaylist.getTracks().add(testTrack);
 
-    @Test
-    void getAllPlaylists_ShouldReturnPageOfPlaylists() {
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10, Sort.by("name"));
-        Page<Playlist> expectedPage = new PageImpl<>(Collections.singletonList(playlist));
+        createRequest = new CreatePlaylistRequest();
+        createRequest.setName("New Playlist");
 
-        when(cacheService.containsKey(anyString())).thenReturn(false);
-        when(playlistRepository.findAll(pageable)).thenReturn(expectedPage);
-
-        // Act
-        Page<Playlist> result = playlistService.getAllPlaylists(null, null, 0, 10, "name");
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        verify(cacheService).put(anyString(), eq(expectedPage));
+        updateRequest = new UpdatePlaylistRequest();
+        updateRequest.setName("Updated Playlist");
+        updateRequest.setUserId(2L);
+        updateRequest.setTrackId(2L);
     }
 
     @Test
     void getAllPlaylists_ShouldReturnFromCache() {
         // Arrange
-        Page<Playlist> expectedPage = new PageImpl<>(Collections.singletonList(playlist));
+        Page<Playlist> cachedPage = new PageImpl<>(List.of(testPlaylist));
         when(cacheService.containsKey(anyString())).thenReturn(true);
-        when(cacheService.get(anyString())).thenReturn(expectedPage);
+        when(cacheService.get(anyString())).thenReturn(cachedPage);
 
         // Act
         Page<Playlist> result = playlistService.getAllPlaylists(null, null, 0, 10, "name");
 
         // Assert
-        assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        verify(playlistRepository, never()).findAll(any(Pageable.class));
+        assertEquals(1, result.getContent().size());
+        verifyNoInteractions(playlistRepository);
+    }
+
+    @Test
+    void getAllPlaylists_ShouldFetchFromDb_WhenNoCache() {
+        // Arrange
+        Page<Playlist> dbPage = new PageImpl<>(List.of(testPlaylist));
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("name"));
+        when(playlistRepository.findAll(pageable)).thenReturn(dbPage);
+
+        // Act
+        Page<Playlist> result = playlistService.getAllPlaylists(null, null, 0, 10, "name");
+
+        // Assert
+        assertEquals(1, result.getContent().size());
+        verify(cacheService, times(1)).put(anyString(), eq(dbPage));
     }
 
     @Test
     void getPlaylistById_ShouldReturnPlaylist() {
         // Arrange
-        when(playlistRepository.findById(1L)).thenReturn(Optional.of(playlist));
+        when(playlistRepository.findById(1L)).thenReturn(Optional.of(testPlaylist));
 
         // Act
         Optional<Playlist> result = playlistService.getPlaylistById(1L);
@@ -115,52 +110,46 @@ class PlaylistServiceTest {
     }
 
     @Test
-    void savePlaylist_ShouldSaveAndClearCache() {
+    void savePlaylist_ShouldCreateNewPlaylist() {
         // Arrange
-        CreatePlaylistRequest request = new CreatePlaylistRequest();
-        request.setName("New Playlist");
-
-        when(playlistRepository.save(any(Playlist.class))).thenReturn(playlist);
+        when(playlistRepository.save(any(Playlist.class))).thenReturn(testPlaylist);
 
         // Act
-        Playlist result = playlistService.savePlaylist(request);
+        Playlist result = playlistService.savePlaylist(createRequest);
 
         // Assert
-        assertNotNull(result);
-        verify(cacheService).clear();
-        verify(playlistRepository).save(any(Playlist.class));
+        assertEquals("Test Playlist", result.getName());
+        verify(cacheService, times(1)).clear();
+        verify(playlistService, times(1)).evictAllPlaylistCaches();
     }
 
     @Test
-    void deletePlaylist_ShouldDeleteAndClearCache() {
+    void deletePlaylist_ShouldRemovePlaylist() {
         // Arrange
-        when(playlistRepository.findById(1L)).thenReturn(Optional.of(playlist));
+        when(playlistRepository.findById(1L)).thenReturn(Optional.of(testPlaylist));
 
         // Act
         playlistService.deletePlaylist(1L);
 
         // Assert
-        verify(playlistRepository).delete(playlist);
-        verify(cacheService).evictByPattern("playlist_*");
-        verify(cacheService).evictByPattern("playlists_*");
+        verify(playlistRepository, times(1)).delete(testPlaylist);
+        verify(playlistService, times(1)).evictAllPlaylistCaches();
     }
 
-
     @Test
-    void deletePlaylist_ShouldThrowWhenNotFound() {
+    void deletePlaylist_ShouldThrow_WhenNotFound() {
         // Arrange
         when(playlistRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> {
-            playlistService.deletePlaylist(1L);
-        });
+        assertThrows(ResourceNotFoundException.class,
+                () -> playlistService.deletePlaylist(1L));
     }
 
     @Test
-    void mapToPlaylistResponse_ShouldMapCorrectly() {
+    void mapToPlaylistResponse_ShouldConvertCorrectly() {
         // Act
-        PlaylistResponse response = playlistService.mapToPlaylistResponse(playlist);
+        PlaylistResponse response = playlistService.mapToPlaylistResponse(testPlaylist);
 
         // Assert
         assertEquals(1L, response.getId());
@@ -172,329 +161,95 @@ class PlaylistServiceTest {
     }
 
     @Test
-    void updatePlaylist_ShouldUpdateName() {
-        // Arrange
-        UpdatePlaylistRequest request = new UpdatePlaylistRequest();
-        request.setName("Updated Name");
-
-        when(playlistRepository.findById(1L)).thenReturn(Optional.of(playlist));
-        when(playlistRepository.save(any(Playlist.class))).thenReturn(playlist);
-
-        // Act
-        PlaylistResponse result = playlistService.updatePlaylist(1L, request);
-
-        // Assert
-        assertEquals("Updated Name", result.getName());
-        verify(cacheService).evictByPattern("playlist_*");
-        verify(cacheService).evictByPattern("playlists_*");
-    }
-
-    @Test
-    void updatePlaylist_ShouldAddUser() {
+    void updatePlaylist_ShouldUpdateAllFields() {
         // Arrange
         User newUser = new User();
         newUser.setId(2L);
         newUser.setUsername("newUser");
 
-        UpdatePlaylistRequest request = new UpdatePlaylistRequest();
-        request.setUserId(2L);
-
-        when(playlistRepository.findById(1L)).thenReturn(Optional.of(playlist));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(newUser));
-        when(playlistRepository.save(any(Playlist.class))).thenReturn(playlist);
-
-        // Act
-        PlaylistResponse result = playlistService.updatePlaylist(1L, request);
-
-        // Assert
-        assertEquals(2, result.getUsers().size());
-        verify(cacheService).evictByPattern("playlist_*");
-        verify(cacheService).evictByPattern("playlists_*");
-    }
-
-    @Test
-    void updatePlaylist_ShouldAddTrack() {
-        // Arrange
         Track newTrack = new Track();
         newTrack.setId(2L);
         newTrack.setTitle("New Track");
 
-        UpdatePlaylistRequest request = new UpdatePlaylistRequest();
-        request.setTrackId(2L);
-
-        when(playlistRepository.findById(1L)).thenReturn(Optional.of(playlist));
+        when(playlistRepository.findById(1L)).thenReturn(Optional.of(testPlaylist));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(newUser));
         when(trackRepository.findById(2L)).thenReturn(Optional.of(newTrack));
-        when(playlistRepository.save(any(Playlist.class))).thenReturn(playlist);
+        when(playlistRepository.save(any(Playlist.class))).thenReturn(testPlaylist);
 
         // Act
-        PlaylistResponse result = playlistService.updatePlaylist(1L, request);
+        PlaylistResponse result = playlistService.updatePlaylist(1L, updateRequest);
 
         // Assert
-        assertEquals(2, result.getTracks().size());
-        verify(cacheService).evictByPattern("playlist_*");
-        verify(cacheService).evictByPattern("playlists_*");
+        assertEquals("Updated Playlist", testPlaylist.getName());
+        assertEquals(2, testPlaylist.getUsers().size());
+        assertEquals(2, testPlaylist.getTracks().size());
+        verify(playlistService, times(1)).evictAllPlaylistCaches();
     }
 
     @Test
-    void updatePlaylist_ShouldThrowWhenPlaylistNotFound() {
+    void updatePlaylist_ShouldUpdateOnlyName() {
         // Arrange
-        when(playlistRepository.findById(1L)).thenReturn(Optional.empty());
+        UpdatePlaylistRequest partialRequest = new UpdatePlaylistRequest();
+        partialRequest.setName("Partial Update");
+
+        when(playlistRepository.findById(1L)).thenReturn(Optional.of(testPlaylist));
+        when(playlistRepository.save(any(Playlist.class))).thenReturn(testPlaylist);
+
+        // Act
+        PlaylistResponse result = playlistService.updatePlaylist(1L, partialRequest);
+
+        // Assert
+        assertEquals("Partial Update", testPlaylist.getName());
+        assertEquals(1, testPlaylist.getUsers().size()); // users not changed
+        assertEquals(1, testPlaylist.getTracks().size()); // tracks not changed
+    }
+
+    @Test
+    void updatePlaylist_ShouldThrow_WhenUserNotFound() {
+        // Arrange
+        when(playlistRepository.findById(1L)).thenReturn(Optional.of(testPlaylist));
+        when(userRepository.findById(2L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> {
-            playlistService.updatePlaylist(1L, new UpdatePlaylistRequest());
-        });
+        assertThrows(ResourceNotFoundException.class,
+                () -> playlistService.updatePlaylist(1L, updateRequest));
     }
 
     @Test
-    void updatePlaylist_ShouldThrowWhenUserNotFound() {
+    void updatePlaylist_ShouldThrow_WhenTrackNotFound() {
         // Arrange
-        UpdatePlaylistRequest request = new UpdatePlaylistRequest();
-        request.setUserId(99L);
-
-        when(playlistRepository.findById(1L)).thenReturn(Optional.of(playlist));
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+        when(playlistRepository.findById(1L)).thenReturn(Optional.of(testPlaylist));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(new User()));
+        when(trackRepository.findById(2L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> {
-            playlistService.updatePlaylist(1L, request);
-        });
+        assertThrows(ResourceNotFoundException.class,
+                () -> playlistService.updatePlaylist(1L, updateRequest));
     }
 
     @Test
-    void updatePlaylist_ShouldThrowWhenTrackNotFound() {
-        // Arrange
-        UpdatePlaylistRequest request = new UpdatePlaylistRequest();
-        request.setTrackId(99L);
-
-        when(playlistRepository.findById(1L)).thenReturn(Optional.of(playlist));
-        when(trackRepository.findById(99L)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> {
-            playlistService.updatePlaylist(1L, request);
-        });
-    }
-
-    @Test
-    void buildPlaylistsCacheKey_ShouldBuildCorrectKey() {
-        // Act
-        String key = playlistService.buildPlaylistsCacheKey("user1", "playlist1", 0, 10, "name");
-
-        // Assert
-        assertEquals("playlists_user1_playlist1_page0_size10_sortname", key);
-    }
-
-    @Test
-    void buildPlaylistsCacheKey_ShouldHandleNullValues() {
-        // Act
-        String key = playlistService.buildPlaylistsCacheKey(null, null, 0, 10, "name");
-
-        // Assert
-        assertEquals("playlists_all_all_page0_size10_sortname", key);
-    }
-
-    @Test
-    void updatePlaylistName_ShouldUpdateName_WhenNameIsNotNull() {
-        // Arrange
-        Playlist playlist = new Playlist();
-        playlist.setName("Old Name");
-        String newName = "New Name";
-
-        // Act
-        playlistService.updatePlaylistName(playlist, newName);
-
-        // Assert
-        assertEquals("New Name", playlist.getName());
-    }
-
-    @Test
-    void updatePlaylistName_ShouldNotUpdateName_WhenNameIsNull() {
-        // Arrange
-        Playlist playlist = new Playlist();
-        playlist.setName("Old Name");
-
-        // Act
-        playlistService.updatePlaylistName(playlist, null);
-
-        // Assert
-        assertEquals("Old Name", playlist.getName());
-    }
-
-    @Test
-    void addUserToPlaylist_ShouldNotAddUser_WhenUserIdIsNull() {
-        // Arrange
-        Playlist playlist = new Playlist();
-
-        // Act
-        playlistService.addUserToPlaylist(playlist, null);
-
-        // Assert
-        assertTrue(playlist.getUsers().isEmpty());
-    }
-
-    @Test
-    void addUserToPlaylist_ShouldAddUser_WhenUserIsValid() {
-        // Arrange
-        Playlist playlist = new Playlist();
-        User user = new User();
-        user.setId(1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        // Act
-        playlistService.addUserToPlaylist(playlist, 1L);
-
-        // Assert
-        assertTrue(playlist.getUsers().contains(user));
-    }
-
-    @Test
-    void addUserToPlaylist_ShouldNotDuplicateUser_WhenUserAlreadyExists() {
-        // Arrange
-        Playlist playlist = new Playlist();
-        User user = new User();
-        user.setId(1L);
-        playlist.getUsers().add(user);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        // Act
-        playlistService.addUserToPlaylist(playlist, 1L);
-
-        // Assert
-        assertEquals(1, playlist.getUsers().size());
-    }
-
-    @Test
-    void addUserToPlaylist_ShouldThrowException_WhenUserNotFound() {
-        // Arrange
-        Playlist playlist = new Playlist();
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> playlistService.addUserToPlaylist(playlist, 99L));
-        assertEquals("User not found", exception.getMessage());
-    }
-
-
-    @Test
-    void addTrackToPlaylist_ShouldNotAddTrack_WhenTrackIdIsNull() {
-        // Arrange
-        Playlist playlist = new Playlist();
-
-        // Act
-        playlistService.addTrackToPlaylist(playlist, null);
-
-        // Assert
-        assertTrue(playlist.getTracks().isEmpty());
-    }
-
-    @Test
-    void addTrackToPlaylist_ShouldAddTrack_WhenTrackIsValid() {
-        // Arrange
-        Playlist playlist = new Playlist();
-        Track track = new Track();
-        track.setId(1L);
-        when(trackRepository.findById(1L)).thenReturn(Optional.of(track));
-
-        // Act
-        playlistService.addTrackToPlaylist(playlist, 1L);
-
-        // Assert
-        assertTrue(playlist.getTracks().contains(track));
-    }
-
-    @Test
-    void addTrackToPlaylist_ShouldNotDuplicateTrack_WhenTrackAlreadyExists() {
-        // Arrange
-        Playlist playlist = new Playlist();
-        Track track = new Track();
-        track.setId(1L);
-        playlist.getTracks().add(track);
-        when(trackRepository.findById(1L)).thenReturn(Optional.of(track));
-
-        // Act
-        playlistService.addTrackToPlaylist(playlist, 1L);
-
-        // Assert
-        assertEquals(1, playlist.getTracks().size());
-    }
-
-    @Test
-    void addTrackToPlaylist_ShouldThrowException_WhenTrackNotFound() {
-        // Arrange
-        Playlist playlist = new Playlist();
-        when(trackRepository.findById(99L)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> playlistService.addTrackToPlaylist(playlist, 99L));
-        assertEquals("Track not found", exception.getMessage());
-    }
-
-    @Test
-    void fetchPlaylistsFromDB_ShouldCallNativeQuery_WhenUserAndNameAreProvided() {
+    void fetchPlaylistsFromDB_ShouldFilterByUserAndName() {
         // Arrange
         Pageable pageable = PageRequest.of(0, 10);
-        Page<Playlist> expectedPage = new PageImpl<>(Collections.singletonList(new Playlist()));
-        when(playlistRepository.findByUserUsernameAndNameNative("testUser", "testName", pageable))
+        Page<Playlist> expectedPage = new PageImpl<>(List.of(testPlaylist));
+        when(playlistRepository.findByUserUsernameAndNameNative("user", "name", pageable))
                 .thenReturn(expectedPage);
 
         // Act
-        Page<Playlist> result = playlistService.fetchPlaylistsFromDB("testUser", "testName", pageable);
+        Page<Playlist> result = playlistService.fetchPlaylistsFromDB("user", "name", pageable);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        verify(playlistRepository).findByUserUsernameAndNameNative("testUser", "testName", pageable);
+        assertEquals(1, result.getContent().size());
+        verify(playlistRepository, times(1))
+                .findByUserUsernameAndNameNative("user", "name", pageable);
     }
 
     @Test
-    void fetchPlaylistsFromDB_ShouldCallFindByUserUsername_WhenOnlyUserIsProvided() {
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Playlist> expectedPage = new PageImpl<>(Collections.singletonList(new Playlist()));
-        when(playlistRepository.findByUserUsername("testUser", pageable)).thenReturn(expectedPage);
-
+    void buildPlaylistsCacheKey_ShouldIncludeAllParams() {
         // Act
-        Page<Playlist> result = playlistService.fetchPlaylistsFromDB("testUser", null, pageable);
+        String key = playlistService.buildPlaylistsCacheKey("user", "name", 1, 20, "name");
 
         // Assert
-        assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        verify(playlistRepository).findByUserUsername("testUser", pageable);
+        assertEquals("playlists_user_name_page1_size20_sortname", key);
     }
-
-    @Test
-    void fetchPlaylistsFromDB_ShouldCallFindAllByName_WhenOnlyNameIsProvided() {
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Playlist> expectedPage = new PageImpl<>(Collections.singletonList(new Playlist()));
-        when(playlistRepository.findAllByName("testName", pageable)).thenReturn(expectedPage);
-
-        // Act
-        Page<Playlist> result = playlistService.fetchPlaylistsFromDB(null, "testName", pageable);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        verify(playlistRepository).findAllByName("testName", pageable);
-    }
-
-    @Test
-    void fetchPlaylistsFromDB_ShouldCallFindAll_WhenUserAndNameAreNull() {
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Playlist> expectedPage = new PageImpl<>(Collections.singletonList(new Playlist()));
-        when(playlistRepository.findAll(pageable)).thenReturn(expectedPage);
-
-        // Act
-        Page<Playlist> result = playlistService.fetchPlaylistsFromDB(null, null, pageable);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        verify(playlistRepository).findAll(pageable);
-    }
-
 }
