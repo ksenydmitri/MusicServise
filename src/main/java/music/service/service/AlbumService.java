@@ -1,14 +1,11 @@
 package music.service.service;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
-import music.service.config.CacheConfig;
 import music.service.dto.*;
 import music.service.exception.ResourceNotFoundException;
 import music.service.model.Album;
-import music.service.model.Track;
 import music.service.model.User;
 import music.service.repositories.AlbumRepository;
 import music.service.repositories.UserRepository;
@@ -24,7 +21,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class AlbumService {
-    private static final Logger logger = LoggerFactory.getLogger(AlbumService.class);
+    private static final Logger logger = LoggerFactory.getLogger(
+            AlbumService.class);
     private final AlbumRepository albumRepository;
     private final UserRepository userRepository;
     private final CacheService cacheService;
@@ -32,7 +30,9 @@ public class AlbumService {
 
     @Autowired
     public AlbumService(AlbumRepository albumRepository,
-                        UserRepository userRepository, CacheService cacheService, MediaService mediaService) {
+                        UserRepository userRepository,
+                        CacheService cacheService,
+                        MediaService mediaService) {
         this.albumRepository = albumRepository;
         this.userRepository = userRepository;
         this.cacheService = cacheService;
@@ -59,9 +59,12 @@ public class AlbumService {
         return albums;
     }
 
-    Page<Album> fetchAlbumsFromDatabase(String user, String title, Pageable pageable) {
+    Page<Album> fetchAlbumsFromDatabase(String user,
+                                        String title,
+                                        Pageable pageable) {
         if (user != null && title != null) {
-            return albumRepository.findByUserUsernameAndTitleNative(user, title, pageable);
+            return albumRepository.findByUserUsernameAndTitleNative(
+                    user, title, pageable);
         } else if (user != null) {
             return albumRepository.findByUserUsername(user, pageable);
         } else if (title != null) {
@@ -115,7 +118,8 @@ public class AlbumService {
         }
 
         Album album = albumRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Album not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Album not found"));
 
         cacheService.put(cacheKey, album);
         return album;
@@ -123,28 +127,25 @@ public class AlbumService {
 
 
     @Transactional
-    public AlbumResponse addAlbum(CreateAlbumRequest request, MultipartFile coverFile) {
-        // Валидация входных данных
+    public AlbumResponse addAlbum(CreateAlbumRequest request,
+                                  MultipartFile coverFile) {
         if (request == null || request.getName() == null ||
                 request.getName().isEmpty() || request.getUserId() == null) {
             throw new IllegalArgumentException("Invalid album creation request");
         }
 
-        // Получаем владельца альбома
         User owner = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getUserId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User not found with ID: " + request.getUserId()));
 
-        // Создаем новый альбом
         Album album = new Album();
         album.setTitle(request.getName());
         album.getUsers().add(owner);
 
-        // Обработка соавторов
         if (request.getCollaborators() != null && !request.getCollaborators().isEmpty()) {
-            // Оптимизированная загрузка всех соавторов одним запросом
-            List<User> collaborators = userRepository.findByUsernameIn(request.getCollaborators());
+            List<User> collaborators = userRepository.findByUsernameIn(
+                    request.getCollaborators());
 
-            // Проверяем, всех ли нашли
             if (collaborators.size() != request.getCollaborators().size()) {
                 List<String> foundUsernames = collaborators.stream()
                         .map(User::getUsername)
@@ -154,14 +155,12 @@ public class AlbumService {
                         .filter(username -> !foundUsernames.contains(username))
                         .collect(Collectors.toList());
 
-                throw new ResourceNotFoundException("Users not found: " + String.join(", ", notFound));
+                throw new ResourceNotFoundException("Users not found: " +
+                        String.join(", ", notFound));
             }
 
-            // Добавляем всех соавторов
             album.getUsers().addAll(collaborators);
         }
-
-        // Загрузка обложки
         if (coverFile != null && !coverFile.isEmpty()) {
             String coverImageId = mediaService.uploadMedia(coverFile);
             album.setCoverImageId(coverImageId);
@@ -178,9 +177,12 @@ public class AlbumService {
     }
 
     @Transactional
-    public AlbumResponse updateAlbum(Long albumId, UpdateAlbumRequest request, MultipartFile coverFile) {
+    public AlbumResponse updateAlbum(Long albumId,
+                                     UpdateAlbumRequest request,
+                                     MultipartFile coverFile) {
         Album album = albumRepository.findById(albumId)
-                .orElseThrow(() -> new ResourceNotFoundException("Album not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Album not found"));
 
         if (request.getName() != null) {
             album.setTitle(request.getName());
@@ -188,7 +190,8 @@ public class AlbumService {
 
         if (request.getUserId() != null) {
             User user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "User not found"));
             if (!album.getUsers().contains(user)) {
                 album.getUsers().add(user);
             }
