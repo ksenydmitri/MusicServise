@@ -29,11 +29,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
         try {
             return ResponseEntity.ok(authService.login(request));
         } catch (RuntimeException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 
@@ -47,7 +47,7 @@ public class AuthController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<?> updateUser(
+    public ResponseEntity<AuthResponse> updateUser(
             @RequestHeader("Authorization") String token,
             @RequestBody UpdateUserRequest request
     ) {
@@ -56,8 +56,7 @@ public class AuthController {
             AuthResponse response = authService.updateUser(username, request);
             return ResponseEntity.ok(response);
         } catch (RuntimeException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", ex.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 

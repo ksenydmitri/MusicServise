@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
+    @Value("${JWT_SECRET}")
     private static String secretKey;
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 10;
