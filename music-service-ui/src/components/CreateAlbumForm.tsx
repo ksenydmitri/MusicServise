@@ -12,9 +12,10 @@ interface UserOption {
 interface Props {
     open: boolean;
     handleClose: () => void;
+    onSuccess: () => void;
 }
 
-const CreateAlbumModal: React.FC<Props> = ({ open, handleClose }) => {
+const CreateAlbumModal: React.FC<Props> = ({ open, handleClose, onSuccess }) => {
     const { user } = useAuth();
     const [formData, setFormData] = useState({
         name: "",
@@ -85,7 +86,8 @@ const CreateAlbumModal: React.FC<Props> = ({ open, handleClose }) => {
             }
 
             await albumApi.createAlbum(formDataToSend);
-            handleClose(); // Закрываем окно после создания альбома
+            onSuccess();
+            handleClose();
         } catch (error) {
             setErrorMessage("Ошибка при создании альбома");
         } finally {

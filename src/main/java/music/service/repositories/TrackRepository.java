@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -34,5 +35,7 @@ public interface TrackRepository extends JpaRepository<Track, Long>,
     @Query("SELECT t FROM Track t JOIN FETCH t.album WHERE t.id = :trackId")
     Optional<Track> findTrackWithAlbumById(@Param("trackId") Long trackId);
 
+    @Query("SELECT t FROM Track t JOIN t.users a WHERE a.id = :userId")
+    List<Track> findTracksByUserId(@Param("userId") Long userId);
 
 }

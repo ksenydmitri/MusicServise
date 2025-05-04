@@ -44,7 +44,6 @@ const TrackCard = ({ track }: TrackCardProps) => {
         console.log('Запуск функции fetchAlbumCover...');
         fetchAlbumCover();
 
-        // Очистка URL для предотвращения утечек памяти
         return () => {
             if (albumCoverUrl && albumCoverUrl !== defaultAvatar) {
                 console.log('Очистка временного URL обложки альбома:', albumCoverUrl);

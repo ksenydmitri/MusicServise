@@ -56,6 +56,11 @@ const AlbumsPage = () => {
         await fetchAlbums(page);
     };
 
+    const handleCreateAlbumSuccess = () => {
+        fetchAlbums(currentPage);
+        setOpenModal(false);
+    };
+
     if (!isAuthenticated) {
         return <div className="auth-message">Пожалуйста, авторизуйтесь для просмотра альбомов</div>;
     }
@@ -97,7 +102,7 @@ const AlbumsPage = () => {
                 </>
             )}
 
-            <CreateAlbumModal open={openModal} handleClose={() => setOpenModal(false)} />
+            <CreateAlbumModal open={openModal} handleClose={() => setOpenModal(false)} onSuccess={handleCreateAlbumSuccess} />
         </div>
     );
 };

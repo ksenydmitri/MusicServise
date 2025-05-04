@@ -106,23 +106,36 @@ public class UserService {
             user.setRole(request.getRole());
         }
 
-        List<Album> albums = albumRepository.findAllByUserId(userId);
-        for (Album album : albums) {
-            Set<User> artists = album.getUsers();
-            for (User artist : artists) {
-                if (artist.getId().equals(userId)) {
-                    artist.setUsername(user.getUsername());
-                    artist.setEmail(user.getEmail());
-                }
-            }
-            albumRepository.save(album);
-            albumService.evictAllAlbumCaches();
-        }
+        updateUserInfoInEntities(userId, user);
 
         User updatedUser = userRepository.save(user);
         return mapToUserResponse(updatedUser);
     }
 
+    private void updateUserInfoInEntities(Long userId, User user) {
+        List<Album> albums = albumRepository.findAllByUserId(userId);
+        for (Album album : albums) {
+            updateUserInfoInSet(album.getUsers(), user);
+            albumRepository.save(album);
+            albumService.evictAllAlbumCaches();
+        }
+
+        List<Track> tracks = trackRepository.findTracksByUserId(userId);
+        for (Track track : tracks) {
+            updateUserInfoInSet(track.getUsers(), user);
+            trackRepository.save(track);
+            trackService.evictAllTrackCaches();
+        }
+    }
+
+    private void updateUserInfoInSet(Set<User> users, User user) {
+        for (User artist : users) {
+            if (artist.getId().equals(user.getId())) {
+                artist.setUsername(user.getUsername());
+                artist.setEmail(user.getEmail());
+            }
+        }
+    }
 
     public Optional<User> findByUsernameOrEmailForAuth(String query) {
         return userRepository.findByUsername(query)

@@ -45,11 +45,15 @@ export const userApi = {
     createUser: (data: { username: string; email: string; password: string; role?: string }) =>
         api.post('/users', data),
 
-    updateUser: (id: number, data: { username?: string; email?: string; password?: string; role?: string }, token: string) =>
+    updateUser: (id: number, data: Partial<{ username: string; email: string; password: string; role: string }>, token: string) =>
         api.patch(`/users/${id}`, data, {
             headers: {
-                Authorization: `Bearer ${token}`
-            }
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        }).catch(error => {
+            console.error('Ошибка при обновлении пользователя:', error.response?.data || error.message);
+            throw error;
         }),
     deleteUser: (id: number) =>
         api.delete(`/users/${id}`)
