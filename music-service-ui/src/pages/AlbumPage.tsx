@@ -90,70 +90,73 @@ const AlbumPage = () => {
 
     return (
         <div className="page-container">
-            <div className="content-card">
-                <div className="album-page">
-                    <div className="album-info">
-                        <h1 className="album-title">{album.title}</h1>
-                        {user && album.userIds.includes(user.id) && (
-                            <>
-                                <button onClick={toggleModal} className="custom-button">
-                                    Добавить трек
-                                </button>
-                                <button onClick={handleDeleteClick} className="custom-button">
-                                    Удалить
-                                </button>
-                                <button onClick={handleEditClick} className="custom-button">
-                                    Изменить
-                                </button>
-                                <DeleteModal open={isDeleteModalOpen} onClose={() => setDeleteModalOpen(false)} onConfirm={handleConfirmDelete} />
-                                <DeleteModal
-                                    open={isTrackDeleteModalOpen}
-                                    onClose={() => setTrackDeleteModalOpen(false)}
-                                    onConfirm={handleConfirmTrackDelete}
-                                />
-                                <EditAlbumModal
-                                    album={album}
-                                    open={isAlbumEditModalOpen}
-                                    handleClose={() => setAlbumEditModalOpen(false)}
-                                    onAlbumUpdated={(updatedAlbum) => {
-                                        setAlbum(updatedAlbum); // Обновляем состояние альбома
-                                        setAlbumEditModalOpen(false); // Закрываем модальное окно
-                                    }}
-                                />
-                            </>
-                        )}
-                        <h2>Исполнители</h2>
-                        <div className="album-title">{album.artists.join(", ")}</div>
-
-                        <div className="track-list-section">
-                            <h3>Треки</h3>
-                            <div className="horizontal-scroll-list">
-                                <div className="horizontal-scroll-container">
-                                    {album.tracks.map((track, index) => (
-                                        <div key={track.id} className="track-card">
-                                            <span className="track-number">{index + 1}</span>
-                                            <h4 className="track-title">{track.title}</h4>
-                                            <h4 className="track-title">{track.id}</h4>
-                                            <p className="track-duration">{track.duration}</p>
-                                            {user && album.userIds.includes(user.id) && (
-                                                <button onClick={() => handleTrackDeleteClick(track)}
-                                                        className="custom-button error">
-                                                    Удалить трек
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+            <div className="content-card album-grid">
+                <div className="album-title">{album.title}
+                    {user && album.userIds.includes(user.id) && (
+                        <div className="button-container">
+                            <button onClick={handleDeleteClick} className="custom-button add-track-button">Удалить</button>
+                            <button onClick={handleEditClick} className="custom-button add-track-button">Изменить</button>
                         </div>
-
-                        {showModal && <AddTrackForm albumId={album.id} onClose={() => setShowModal(false)} onSuccess={handleTrackAdded} />}
-                    </div>
-
-                    <div className="album-cover-container">
-                        <img src={albumCoverUrl} alt={`Обложка альбома ${album.title}`} className="album-cover" />
-                    </div>
+                    )}
                 </div>
+
+                <div className="album-authors">
+                    <DeleteModal open={isDeleteModalOpen} onClose={() => setDeleteModalOpen(false)} onConfirm={handleConfirmDelete} />
+                    <EditAlbumModal
+                        album={album}
+                        open={isAlbumEditModalOpen}
+                        handleClose={() => setAlbumEditModalOpen(false)}
+                        onAlbumUpdated={(updatedAlbum) => setAlbum(updatedAlbum)}
+                    />
+
+                    <h2>Исполнители</h2>
+
+                    <p>{album.artists.join(", ")}</p>
+                </div>
+
+                <div className="album-cover-container">
+                    <img src={albumCoverUrl} alt={`Обложка альбома ${album.title}`} className="album-cover" />
+                </div>
+
+                <div className="track-header">
+                    <h3>Треки</h3>
+                </div>
+                <div className="add-track-button">
+                    {user && album.userIds.includes(user.id) && (
+                        <button onClick={toggleModal} className="custom-button add-track-btn">Добавить трек</button>
+                    )}
+                </div>
+
+                <div className="track-table-section">
+                <table className="track-table">
+                        <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Название</th>
+                            <th>Длительность</th>
+                            {user && album.userIds.includes(user.id) && <th>Действия</th>}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {album.tracks.map((track, index) => (
+                            <tr key={track.id}>
+                                <td>{index + 1}</td>
+                                <td>{track.title}</td>
+                                <td>{track.duration}</td>
+                                {user && album.userIds.includes(user.id) && (
+                                    <td>
+                                        <button onClick={() => handleTrackDeleteClick(track)} className="custom-button error">
+                                            Удалить
+                                        </button>
+                                    </td>
+                                )}
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {showModal && <AddTrackForm albumId={album.id} onClose={() => setShowModal(false)} onSuccess={handleTrackAdded} />}
             </div>
         </div>
     );
