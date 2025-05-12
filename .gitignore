@@ -40,3 +40,4 @@ build/
 *.json
 !**/logs/*.log
 /logs/application.log
+.env
